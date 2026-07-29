@@ -625,58 +625,78 @@ select option {
 }
 
 /* ==========================================================================
-   Astronauta del fondo de la portada — adaptado de Uiverse.io (JkHuger, MIT).
-   Ver src/components/astronauta.tsx para las decisiones de accesibilidad.
+   Escena espacial del fondo de la portada — astronautas volando, planetas a
+   la deriva y un cielo estrellado. El astronauta base viene de Uiverse.io
+   (JkHuger, MIT); el resto es propio. Ver src/components/astronauta.tsx para
+   las decisiones de accesibilidad y por qué se usan `translate`/`rotate`/
+   `scale` como propiedades independientes en vez de `transform`.
    ========================================================================== */
 
-@keyframes lluvia-estrellas {
-  0%   { opacity: 0; transform: translateY(0); }
-  20%  { opacity: 1; }
-  100% { opacity: 1; transform: translateY(650px); }
+@keyframes titilar {
+  0%, 100% { opacity: .15; }
+  50%      { opacity: .9; }
+}
+
+@keyframes derivar-planeta {
+  from { translate: 0 0; }
+  to   { translate: var(--dx, 3vw) var(--dy, 3vh); }
+}
+
+@keyframes volar {
+  from { translate: 0 0; }
+  to   { translate: var(--dx, 14vw) var(--dy, -10vh); }
 }
 
 @keyframes girar-astronauta {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from { rotate: 0deg; }
+  to   { rotate: 360deg; }
 }
 
-.astronauta-escena .caja-estrellas {
+.astronauta-escena .cielo {
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 700px;
-  animation: lluvia-estrellas 5s linear infinite;
+  inset: 0;
 }
 
-.astronauta-escena .estrella {
+.astronauta-escena .estrellita {
   position: absolute;
-  width: 3px;
-  height: 3px;
+  width: 2px;
+  height: 2px;
   border-radius: 50%;
-  background-color: #fff;
-  opacity: 0.7;
+  background: #fff;
+  opacity: .15;
+  animation: titilar 3.4s ease-in-out infinite;
 }
-.astronauta-escena .estrella::before,
-.astronauta-escena .estrella::after {
-  content: "";
+
+.astronauta-escena .planeta {
   position: absolute;
   border-radius: 50%;
-  background-color: #fff;
+  translate: 0 0;
+  filter: blur(0.2px);
+  box-shadow: 0 0 26px -4px rgba(255, 255, 255, 0.25);
+  animation: derivar-planeta var(--dur, 50s) ease-in-out infinite alternate;
 }
-.astronauta-escena .estrella::before { width: 6px; height: 6px; top: 80px; left: 70px; opacity: 0.7; }
-.astronauta-escena .estrella::after  { width: 8px; height: 8px; top: 8px;  left: 170px; opacity: 0.9; }
 
-.astronauta-escena .astronauta {
+/* Cada miembro de la bandada es un ancla (top/left en %, centrada con margin
+   negativo) que solo anima `translate` — su vuelo por la pantalla. El giro
+   sobre sí mismo vive en el hijo `.astronauta`, para que las dos animaciones
+   no compitan por la misma propiedad. */
+.astronauta-escena .astronauta-vuelo {
   position: absolute;
   width: 250px;
   height: 300px;
-  top: calc(50% - 150px);
-  left: calc(50% - 125px);
-  /* Más lento que el original (5s): a esa velocidad la rotación distrae de la
-     portada en lugar de acompañarla. */
-  animation: girar-astronauta 24s linear infinite;
-  /* Se integra al degradado en vez de flotar como un recorte encima. */
-  opacity: 0.5;
+  margin: -150px 0 0 -125px;
+  translate: 0 0;
+  animation: volar 30s ease-in-out infinite alternate;
+}
+
+.astronauta-escena .astronauta {
+  position: absolute;
+  inset: 0;
+  scale: var(--escala, 1);
+  opacity: var(--opacidad, 0.5);
+  rotate: 0deg;
   filter: drop-shadow(0 0 24px rgba(167, 139, 250, 0.35));
+  animation: girar-astronauta 24s linear infinite;
 }
 
 .astronauta-escena .mochila {
@@ -828,10 +848,21 @@ select option {
   border-bottom: 10px solid #b0cfe4;
 }
 
-/* Quien pidió menos movimiento en su sistema ve la escena quieta: una rotación
-   permanente puede marear o disparar migraña. */
+/* En pantallas chicas la bandada se reduce a dos: cuatro astronautas grandes
+   compitiendo por la atención en un teléfono es ruido, no ambientación. */
+@media (max-width: 640px) {
+  .astronauta-escena .bandada .astronauta-vuelo:nth-of-type(n + 3) {
+    display: none;
+  }
+}
+
+/* Quien pidió menos movimiento en su sistema ve la escena quieta: varias cosas
+   moviéndose a la vez a distintas velocidades es más intenso que una sola, y
+   una rotación o traslación permanente puede marear o disparar migraña. */
 @media (prefers-reduced-motion: reduce) {
-  .astronauta-escena .caja-estrellas,
+  .astronauta-escena .estrellita,
+  .astronauta-escena .planeta,
+  .astronauta-escena .astronauta-vuelo,
   .astronauta-escena .astronauta {
     animation: none;
   }
