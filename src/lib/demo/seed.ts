@@ -15,9 +15,9 @@
 //     no le enseñan nada a nadie).
 
 import {
-  ALL_ITEMS,
   INSTRUMENTO_VERSION,
   ITEMS_CERRADOS,
+  TOTAL_ITEMS_OBLIGATORIOS,
   camposAbiertos,
   type Item,
 } from "@/lib/items";
@@ -315,7 +315,7 @@ export function resumirDatos(datos: DatosDemo) {
     const puras = datos.abiertas.filter(
       (r) => r.userId === u.id && r.clave === "mensaje_decisores",
     ).length;
-    return cerradas + puras === ALL_ITEMS.length;
+    return cerradas + puras === TOTAL_ITEMS_OBLIGATORIOS;
   }).length;
 
   return {

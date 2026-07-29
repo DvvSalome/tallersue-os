@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getActor } from "@/lib/actor";
 import { createClient } from "@/lib/supabase/server";
 import { comunaNombre } from "@/lib/comunas";
-import { TOTAL_ITEMS } from "@/lib/items";
+import { TOTAL_ITEMS_OBLIGATORIOS } from "@/lib/items";
 import { DEMO_MODE } from "@/lib/demo/config";
 import { DemoHome } from "./demo-home";
 import { HomeClient } from "./home-client";
@@ -33,10 +33,10 @@ export default async function HomePage() {
   const cta =
     respondidos === 0
       ? "Iniciar el formulario"
-      : respondidos >= TOTAL_ITEMS
+      : respondidos >= TOTAL_ITEMS_OBLIGATORIOS
         ? "Revisar mis respuestas"
-        : `Continuar (${respondidos}/${TOTAL_ITEMS})`;
-  const ctaHref = respondidos >= TOTAL_ITEMS ? "/resultados" : "/formulario";
+        : `Continuar (${respondidos}/${TOTAL_ITEMS_OBLIGATORIOS})`;
+  const ctaHref = respondidos >= TOTAL_ITEMS_OBLIGATORIOS ? "/resultados" : "/formulario";
 
   return (
     <HomeClient

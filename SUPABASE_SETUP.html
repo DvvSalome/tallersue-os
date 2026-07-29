@@ -139,13 +139,12 @@
     <a href="#intro">Introducción</a>
     <a href="#paso1">1. Crear el proyecto Supabase</a>
     <a href="#paso2">2. Ejecutar el schema SQL</a>
-    <a href="#paso3">3. Activar inicio anónimo</a>
-    <a href="#paso4">4. Cargar datos maestros</a>
-    <a href="#paso5">5. Crear facilitadores/organizadores</a>
-    <a href="#paso6">6. Variables de entorno</a>
-    <a href="#paso7">7. Correr la app en local</a>
-    <a href="#paso8">8. Storage (evidencias)</a>
-    <a href="#paso9">9. Desplegar en Vercel</a>
+    <a href="#paso3">3. Cargar datos maestros</a>
+    <a href="#paso4">4. Crear facilitadores/organizadores</a>
+    <a href="#paso5">5. Variables de entorno</a>
+    <a href="#paso6">6. Correr la app en local</a>
+    <a href="#paso7">7. Storage (evidencias)</a>
+    <a href="#paso8">8. Desplegar en Vercel</a>
     <a href="#troubleshooting">Troubleshooting</a>
   </nav>
   <main>
@@ -196,7 +195,7 @@ vercel integration add supabase --non-interactive</code></pre>
       <li>En <em>Project Settings → Database</em>, copia la <code>Connection string</code>
         (modo <em>Session pooler</em> o <em>Direct connection</em>) → <code>POSTGRES_URL_NON_POOLING</code>.</li>
     </ol>
-    <p>Pega todo eso en un archivo <code>.env.local</code> en la raíz del proyecto (ver <a href="#paso5">Paso 5</a>).</p>
+    <p>Pega todo eso en un archivo <code>.env.local</code> en la raíz del proyecto (ver <a href="#paso4">Paso 5</a>).</p>
 
     <h2 id="paso2"><span class="badge">Paso 2</span>Ejecutar el schema SQL</h2>
     <p>
@@ -222,35 +221,11 @@ npm run db:migrate</code></pre>
       <li>Repite con <code>supabase/seed.sql</code>.</li>
     </ol>
 
-    <h2 id="paso3"><span class="badge">Paso 3</span>Activar inicio de sesión anónimo (obligatorio)</h2>
-    <div class="card warn">
-      <strong>Sin este paso, "Ya soy participante" no funciona.</strong> Los participantes
-      entran con un <strong>código de equipo</strong> (sin correo, sin contraseña personal) —
-      por dentro usan
-      <a href="https://supabase.com/docs/guides/auth/auth-anonymous" target="_blank" rel="noopener">Supabase Anonymous Sign-ins</a>,
-      que viene <strong>desactivado por defecto</strong> y solo se activa desde el dashboard
-      (no hay forma de hacerlo por SQL ni por el CLI).
-    </div>
-    <ol>
-      <li>Ve a <code>supabase.com/dashboard/project/&lt;tu-project-ref&gt;/auth/providers</code>
-        (o Authentication → Providers en el menú).</li>
-      <li>Busca <strong>"Allow anonymous sign-ins"</strong> y actívalo.</li>
-      <li>Guarda. No requiere redeploy — el cambio aplica de inmediato.</li>
-    </ol>
-    <p>Para confirmar que quedó activo, prueba desde una terminal con Node:</p>
-    <pre><code>node -e "
-require('@supabase/supabase-js').createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-).auth.signInAnonymously().then(({data,error}) => console.log(error?.message ?? 'OK', data?.user?.id));
-"</code></pre>
-    <p>Si imprime <code>OK &lt;uuid&gt;</code>, quedó activo. Si dice <code>Anonymous sign-ins are disabled</code>, revisa el paso anterior.</p>
-
-    <h2 id="paso4"><span class="badge">Paso 4</span>Cargar datos maestros</h2>
+    <h2 id="paso3"><span class="badge">Paso 3</span>Cargar datos maestros</h2>
     <p><code>supabase/seed.sql</code> incluye:</p>
     <ul>
       <li>Las <strong>16 comunas</strong> de Medellín (id 1–16).</li>
-      <li>El <strong>catálogo de los 14 ítems</strong> (4 bloques) — solo metadatos
+      <li>El <strong>catálogo de las 20 preguntas</strong> (5 bloques) — solo metadatos
         (clave/tipo/etiqueta); las opciones de cada pregunta viven en
         <code>src/lib/items.ts</code> en el código, no en la base de datos.</li>
       <li>Un set de ejemplo de <strong>líneas de atención</strong> (salud mental, salud
@@ -265,7 +240,7 @@ require('@supabase/supabase-js').createClient(
       directamente en el SQL Editor.
     </div>
 
-    <h2 id="paso5"><span class="badge">Paso 5</span>Crear facilitadores/organizadores</h2>
+    <h2 id="paso4"><span class="badge">Paso 4</span>Crear facilitadores/organizadores</h2>
     <p>
       Los facilitadores no se auto-registran desde la app — se crean con un script que
       usa la <code>service_role key</code>. Cada facilitador tiene un
@@ -286,7 +261,7 @@ npm run facilitador:create -- COORDINACION "otraClaveSegura456" all "Coordinaci�
       para esto, es autoservicio desde el panel.
     </p>
 
-    <h2 id="paso6"><span class="badge">Paso 6</span>Variables de entorno</h2>
+    <h2 id="paso5"><span class="badge">Paso 5</span>Variables de entorno</h2>
     <p>Si usaste el <strong>Camino A</strong> (Vercel), <code>vercel env pull .env.local --yes</code>
       ya te dejó todo listo. Si fue manual, tu <code>.env.local</code> debe verse así:</p>
     <pre><code>NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
@@ -305,24 +280,24 @@ POSTGRES_URL_NON_POOLING=postgres://postgres.xxxx:PASSWORD@aws-0-xxxx.pooler.sup
       <code>.gitignore</code> por defecto (lo agrega <code>create-next-app</code>).
     </div>
 
-    <h2 id="paso7"><span class="badge">Paso 7</span>Correr la app en local</h2>
+    <h2 id="paso6"><span class="badge">Paso 6</span>Correr la app en local</h2>
     <pre><code>npm install
 npm run db:migrate            # si no lo habías corrido
 npm run dev</code></pre>
     <p>Abre <code>http://localhost:3000</code>. Deberías poder:</p>
     <ul>
       <li>Iniciar sesión como facilitador en <code>/facilitador/login</code> con la cuenta
-        creada en el <a href="#paso5">Paso 5</a>, e ir a <em>Códigos de equipo</em> para
+        creada en el <a href="#paso4">Paso 5</a>, e ir a <em>Códigos de equipo</em> para
         crear uno.</li>
-      <li>Entrar como participante en <code>/participar</code> con ese código + un apodo
-        (sin correo, sin contraseña personal — falla si el <a href="#paso3">Paso 3</a> no
-        está activo).</li>
-      <li>Ver la home con las líneas de atención de la comuna del equipo.</li>
-      <li>Responder el formulario de 4 bloques / 14 ítems y descargar el CSV de resultados
+      <li>Entrar como participante en <code>/participar</code> con ese código, un apodo,
+        la edad y la comuna. No pide correo ni contraseña: el servidor emite credenciales
+        internas y abre la sesión.</li>
+      <li>Ver la home con las líneas de atención de la comuna que eligió el participante.</li>
+      <li>Responder el formulario de 5 bloques / 20 preguntas y descargar el CSV de resultados
         propios al terminar.</li>
     </ul>
 
-    <h2 id="paso8"><span class="badge">Paso 8</span>Storage para evidencias (fotos)</h2>
+    <h2 id="paso7"><span class="badge">Paso 7</span>Storage para evidencias (fotos)</h2>
     <p>
       El ítem 7 (evidencia del bloque 2) sube una foto opcional al bucket privado
       <code>evidencias</code>, creado automáticamente por <code>schema.sql</code>. Cada
@@ -333,7 +308,7 @@ npm run dev</code></pre>
       <em>Storage</em> del dashboard, vuelve a correr <code>supabase/schema.sql</code>.
     </p>
 
-    <h2 id="paso9"><span class="badge">Paso 9</span>Desplegar en Vercel</h2>
+    <h2 id="paso8"><span class="badge">Paso 8</span>Desplegar en Vercel</h2>
     <pre><code>vercel deploy          # preview
 vercel deploy --prod   # producción (pide confirmación explícita)</code></pre>
     <p>
@@ -361,11 +336,16 @@ vercel deploy --prod   # producción (pide confirmación explícita)</code></pre
     <details>
       <summary>"Ya soy participante" no hace nada / da error al entrar con el código</summary>
       <p>
-        Casi siempre es el <a href="#paso3">Paso 3</a> sin activar: revisa con el comando de
-        esa sección. Si ya está activo y el error es
-        <code>"Ese código de equipo no existe o ya no está activo"</code>, confirma que el
-        código se creó desde <em>Códigos de equipo</em> en el panel de facilitador y que
-        sigue <strong>Activo</strong> (no desactivado).
+        Si el error es <code>"Ese código de equipo no existe o ya no está activo"</code>,
+        confirma que el código se creó desde <em>Códigos de equipo</em> en el panel de
+        facilitador y que sigue <strong>Activo</strong>. Si en cambio dice
+        <code>"No se pudo crear tu sesión"</code>, el problema está en las credenciales del
+        servidor: revisa que <code>SUPABASE_SERVICE_ROLE_KEY</code> corresponda al mismo
+        proyecto que <code>NEXT_PUBLIC_SUPABASE_URL</code>.
+        <br /><br />
+        Nota histórica: esto solía fallar porque el proveedor <em>Anonymous sign-ins</em>
+        venía desactivado y había que encenderlo a mano. Ya no aplica — los participantes
+        usan credenciales sintéticas emitidas por el servidor.
       </p>
     </details>
 
@@ -418,15 +398,17 @@ vercel deploy --prod   # producción (pide confirmación explícita)</code></pre
     <details>
       <summary>Necesito borrar datos de prueba antes de lanzar de verdad</summary>
       <p>
-        Los participantes son usuarios anónimos de Supabase Auth
-        (<code>is_anonymous = true</code>, sin email). Para borrar todos: listarlos con
-        <code>supabase.auth.admin.listUsers()</code> filtrando por
-        <code>user.is_anonymous</code> y borrar con
-        <code>supabase.auth.admin.deleteUser(id)</code> — el borrado en cascada limpia
-        automáticamente <code>public.users</code> y <code>public.responses</code>
-        (foreign keys con <code>on delete cascade</code>). Los equipos
-        (<code>public.equipos</code>) no se borran solos: bórralos aparte o desactívalos
-        (<code>activo = false</code>) desde el panel.
+        Los participantes tienen un email sintético bajo
+        <code>@participantes.tallerdelossuenos.local</code> (antes eran usuarios anónimos;
+        ya no). Lo más simple es partir de <code>public.users</code>, que solo contiene
+        participantes: para cada <code>id</code>, llamar
+        <code>supabase.auth.admin.deleteUser(id)</code>. El borrado en cascada limpia
+        <code>public.users</code>, <code>public.responses</code> y
+        <code>public.respuestas_abiertas</code> (foreign keys con
+        <code>on delete cascade</code>). Los equipos (<code>public.equipos</code>) no se
+        borran solos: bórralos aparte o desactívalos (<code>activo = false</code>).
+        Cuidado con filtrar por <code>@facilitadores.</code>: esas cuentas son las de
+        quienes facilitan y no deben borrarse.
       </p>
     </details>
 

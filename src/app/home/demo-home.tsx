@@ -6,7 +6,7 @@ import { useDemoActor } from "@/lib/demo/use-demo-actor";
 import { responsesForUser } from "@/lib/demo/store";
 import { lineasParaComuna } from "@/lib/demo/lineas";
 import { comunaNombre } from "@/lib/comunas";
-import { TOTAL_ITEMS } from "@/lib/items";
+import { TOTAL_ITEMS_OBLIGATORIOS } from "@/lib/items";
 import { HomeClient } from "./home-client";
 
 export function DemoHome() {
@@ -24,10 +24,10 @@ export function DemoHome() {
   const cta =
     respondidos === 0
       ? "Iniciar el formulario"
-      : respondidos >= TOTAL_ITEMS
+      : respondidos >= TOTAL_ITEMS_OBLIGATORIOS
         ? "Revisar mis respuestas"
-        : `Continuar (${respondidos}/${TOTAL_ITEMS})`;
-  const ctaHref = respondidos >= TOTAL_ITEMS ? "/resultados" : "/formulario";
+        : `Continuar (${respondidos}/${TOTAL_ITEMS_OBLIGATORIOS})`;
+  const ctaHref = respondidos >= TOTAL_ITEMS_OBLIGATORIOS ? "/resultados" : "/formulario";
 
   return (
     <HomeClient

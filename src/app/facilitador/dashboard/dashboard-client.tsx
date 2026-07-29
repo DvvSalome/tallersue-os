@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { TOTAL_ITEMS } from "@/lib/items";
+import { TOTAL_ITEMS_OBLIGATORIOS } from "@/lib/items";
 
 export type ParticipantRow = {
   user_id: string;
@@ -125,14 +125,14 @@ export function DashboardClient({
                         <span
                           className="block h-full rounded-full transition-all duration-500"
                           style={{
-                            width: `${(r.items_respondidos / TOTAL_ITEMS) * 100}%`,
+                            width: `${(r.items_respondidos / TOTAL_ITEMS_OBLIGATORIOS) * 100}%`,
                             background:
                               "linear-gradient(90deg, #7c3aed 0%, #a78bfa 60%, #f2734a 100%)",
                           }}
                         />
                       </span>
                       <span className="tabular-nums text-muted">
-                        {r.items_respondidos}/{TOTAL_ITEMS}
+                        {r.items_respondidos}/{TOTAL_ITEMS_OBLIGATORIOS}
                       </span>
                     </div>
                   </td>

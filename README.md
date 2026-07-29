@@ -4,8 +4,9 @@ Sistema de orientación personal e inteligencia cívica para jóvenes en
 Medellín — instrumento de **5 bloques / 20 preguntas** más dos dashboards:
 *Mi Brújula de los Sueños* (personal y privado) y *Nuestro Mapa de los Sueños*
 (colectivo y anónimo). Los participantes entran con un
-**código de equipo** (sin cuenta personal, vía Supabase Anonymous Auth); los
-facilitadores crean esos códigos y ven el dashboard. Next.js (App Router) +
+**código de equipo**: no crean cuenta ni ven contraseñas — el servidor les emite
+credenciales sintéticas y abre la sesión, así que no hay nada que habilitar a
+mano en Supabase. Los facilitadores crean esos códigos y ven el dashboard. Next.js (App Router) +
 Supabase (Postgres, Auth, Storage), desplegado en Vercel.
 
 ## Setup
