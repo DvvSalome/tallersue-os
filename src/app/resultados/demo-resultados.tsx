@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDemoActor } from "@/lib/demo/use-demo-actor";
-import { respuestasAbiertasForUser, responsesForUser } from "@/lib/demo/store";
+import { getUser, respuestasAbiertasForUser, responsesForUser } from "@/lib/demo/store";
 import { buildParticipantCsv } from "@/lib/demo/csv";
 import { INSTRUMENTO_VERSION } from "@/lib/items";
 import { calcularBrujula } from "@/lib/brujula";
@@ -37,6 +37,7 @@ export function DemoResultados() {
       brujula={calcularBrujula(cerradas, abiertas)}
       cerradas={cerradas}
       abiertas={abiertas}
+      apodo={getUser(actor.id)?.apodo}
       downloadGenerate={() => buildParticipantCsv(responses, textos)}
     />
   );

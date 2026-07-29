@@ -29,6 +29,12 @@ export default async function ResultadosPage() {
       .eq("version", INSTRUMENTO_VERSION),
   ]);
 
+  const { data: perfil } = await supabase
+    .from("users")
+    .select("apodo")
+    .eq("id", actor.id)
+    .maybeSingle();
+
   const cerradas: RespuestasCerradas = {};
   for (const r of responses ?? []) cerradas[r.item] = r.valor as StoredValor;
 
@@ -40,6 +46,7 @@ export default async function ResultadosPage() {
       brujula={calcularBrujula(cerradas, abiertas)}
       cerradas={cerradas}
       abiertas={abiertas}
+      apodo={perfil?.apodo}
       downloadHref="/api/participante/export"
     />
   );
