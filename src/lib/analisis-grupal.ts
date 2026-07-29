@@ -9,10 +9,18 @@
 // facilita. La comuna NO es un eje de análisis — el participante la declara solo
 // para que la app le muestre puntos de atención cerca de donde vive.
 
-/** Umbral de k-anonimato. Doc §4: los agregados se publican "cuando exista un
- *  mínimo de cinco respuestas para preservar el anonimato". El mismo número está
- *  codificado en las funciones SQL; si cambia, debe cambiar en ambos lados. */
-export const K_ANON_MIN = 5;
+/** Umbral de k-anonimato: respondientes distintos que un grupo necesita en una
+ *  pregunta para que su agregado se publique.
+ *
+ *  Debe coincidir con public.k_anonimato_minimo() en supabase/schema.sql. Si los
+ *  dos no dicen lo mismo, la interfaz anuncia un umbral distinto al que la base
+ *  aplica y el facilitador no entiende por qué falta un panel.
+ *
+ *  Bajado a 3 por decisión del equipo. Queda dicho que el Documento Técnico (§4)
+ *  y el brief (§17) piden 5, y que con 3 la reidentificación es más fácil:
+ *  conociendo a dos integrantes de un grupo de tres se deducen las respuestas
+ *  del tercero. */
+export const K_ANON_MIN = 3;
 
 /** Distribución de una pregunta cerrada dentro de un grupo. */
 export type ClosedRow = {

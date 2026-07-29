@@ -215,6 +215,20 @@ create trigger responses_touch_updated_at
   before update on public.responses
   for each row execute function public.touch_updated_at();
 
+-- Umbral de k-anonimato: el mínimo de respondientes distintos que un grupo
+-- necesita en una pregunta para que su agregado se publique.
+--
+-- Vive en una función y no como literal repetido porque este número ya cambió
+-- una vez y volverá a cambiar. El equivalente en TypeScript es K_ANON_MIN en
+-- src/lib/analisis-grupal.ts: los dos tienen que decir lo mismo.
+--
+-- ADVERTENCIA: bajarlo facilita la reidentificación. Con 3, quien conozca las
+-- respuestas de dos integrantes deduce las del tercero, y el instrumento
+-- pregunta por violencia familiar, consumo de sustancias y autoestima. El
+-- Documento Técnico (§4) y el brief de diseño (§17) piden 5.
+create or replace function public.k_anonimato_minimo()
+returns integer language sql immutable as $$ select 3 $$;
+
 -- Which instrument version the app should read/aggregate. Derived from the
 -- catalog so the views never hardcode a number.
 create or replace function public.instrumento_version_actual()
@@ -409,7 +423,7 @@ language sql stable as $$
     group by bloque, item, equipo_id
   ),
   eligible as (
-    select * from grupo_counts where total_grupo >= 5
+    select * from grupo_counts where total_grupo >= public.k_anonimato_minimo()
   ),
   exploded as (
     -- unica / likert: single value per row; multiple: one row per selected option
@@ -481,7 +495,7 @@ language sql stable as $$
     group by bloque, item, clave, equipo_id
   ),
   eligible as (
-    select * from grupo_counts where total_grupo >= 5
+    select * from grupo_counts where total_grupo >= public.k_anonimato_minimo()
   )
   select
     b.bloque, b.item, b.clave, b.equipo_id, b.equipo_codigo, b.equipo_nombre,
@@ -637,6 +651,8 @@ revoke execute on function public.v_group_analysis_texto() from public, anon;
 grant execute on function public.v_group_analysis_texto() to authenticated;
 revoke execute on function public.instrumento_version_actual() from public, anon;
 grant execute on function public.instrumento_version_actual() to authenticated;
+revoke execute on function public.k_anonimato_minimo() from public, anon;
+grant execute on function public.k_anonimato_minimo() to authenticated;
 
 -- ============================================================================
 -- 9. Storage bucket for "evidencia" photo uploads (item 7, bloque 2)
