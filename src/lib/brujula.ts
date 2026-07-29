@@ -573,7 +573,7 @@ const PERFILES: {
   },
 ];
 
-function calcularPerfilLiderazgo(cerradas: RespuestasCerradas): PerfilLiderazgo {
+export function calcularPerfilLiderazgo(cerradas: RespuestasCerradas): PerfilLiderazgo {
   const p19 = itemRequerido("intereses_iniciativas");
   const fortaleza = getOpcion(clave(cerradas, "mayor_fortaleza"));
   const intereses = opcionesReales(p19, getOpciones(clave(cerradas, "intereses_iniciativas")));

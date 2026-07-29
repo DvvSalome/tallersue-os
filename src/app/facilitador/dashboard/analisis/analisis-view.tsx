@@ -6,6 +6,7 @@ import { seccionesResueltas, type SerieResuelta } from "@/lib/mapa-colectivo";
 import { FacilitadorNav } from "@/components/facilitador-nav";
 import { K_ANON_MIN, nombreGrupo, type ClosedRow, type TextoRow } from "@/lib/analisis-grupal";
 import { Dona, Medidor } from "@/components/charts";
+import type { PerfilRow } from "@/lib/perfiles-grupales";
 
 /** Con más de esto, un anillo vuelve las porciones hilos y se pierde la
  *  comparación: ahí las barras se leen mejor (brief §5 y §29). */
@@ -32,11 +33,13 @@ export function AnalisisView({
   codigoGrupo,
   closedRows,
   textoRows,
+  perfilRows,
   exportSlot,
 }: {
   codigoGrupo: string;
   closedRows: ClosedRow[];
   textoRows: TextoRow[];
+  perfilRows: PerfilRow[];
   exportSlot: React.ReactNode;
 }) {
   const secciones = seccionesResueltas();
@@ -46,11 +49,11 @@ export function AnalisisView({
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, string>();
-    for (const r of [...closedRows, ...textoRows]) {
+    for (const r of [...closedRows, ...textoRows, ...perfilRows]) {
       mapa.set(r.equipo_id, nombreGrupo(r.equipo_codigo, r.equipo_nombre));
     }
     return [...mapa.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [closedRows, textoRows]);
+  }, [closedRows, textoRows, perfilRows]);
 
   // Con "Todos" seleccionado hay una fila POR GRUPO para la misma opción. Si se
   // pintan tal cual, la misma categoría aparece repetida tantas veces como
@@ -63,7 +66,12 @@ export function AnalisisView({
     () => (grupoActivo ? textoRows.filter((f) => f.equipo_id === grupoActivo) : unirTextos(textoRows)),
     [textoRows, grupoActivo],
   );
-  const hayDatos = cerradas.length > 0 || textos.length > 0;
+  const perfiles = useMemo(
+    () =>
+      grupoActivo ? perfilRows.filter((f) => f.equipo_id === grupoActivo) : unirPerfiles(perfilRows),
+    [perfilRows, grupoActivo],
+  );
+  const hayDatos = cerradas.length > 0 || textos.length > 0 || perfiles.length > 0;
   const seccion = secciones.find((s) => s.id === seccionActiva) ?? secciones[0];
 
   return (
@@ -176,6 +184,10 @@ export function AnalisisView({
                   textos={textos.filter((r) => r.clave === serie.clave)}
                 />
               ))}
+
+              {seccion.id === "con_que_contamos" && (
+                <PanelPerfiles perfiles={perfiles} forma={forma} />
+              )}
             </section>
           )}
 
@@ -405,6 +417,53 @@ function Serie({
   );
 }
 
+/** Distribución de perfiles de liderazgo (doc §4). Es un indicador DERIVADO de
+ *  dos respuestas, no una pregunta: la nota lo dice para que no se lea como algo
+ *  que el grupo respondió directamente. */
+function PanelPerfiles({ perfiles, forma }: { perfiles: PerfilRow[]; forma: Forma }) {
+  if (perfiles.length === 0) {
+    return (
+      <Panel titulo="Orientaciones de liderazgo en el grupo" n={null}>
+        <p className="text-sm leading-relaxed text-muted/80">
+          Todavía no hay suficientes respuestas para mostrar esta distribución de forma segura
+          (mínimo {K_ANON_MIN} por grupo).
+        </p>
+      </Panel>
+    );
+  }
+
+  const ordenadas = [...perfiles].sort((a, b) => b.n - a.n);
+  const total = ordenadas[0].total_grupo;
+
+  return (
+    <Panel
+      titulo="Orientaciones de liderazgo en el grupo"
+      n={total}
+      nota="No es una pregunta del formulario: se deriva de la fortaleza que cada persona reconoce y de los temas en los que le interesa participar. Describe orientaciones del momento, no tipos de persona."
+    >
+      {forma === "barras" ? (
+        <ul className="flex flex-col gap-1.5">
+          {ordenadas.map((f) => (
+            <Barra
+              key={f.perfil}
+              etiqueta={f.nombre}
+              n={f.n}
+              pct={f.porcentaje}
+              total={f.total_grupo}
+            />
+          ))}
+        </ul>
+      ) : (
+        <Dona
+          porciones={ordenadas.map((f) => ({ etiqueta: f.nombre, n: f.n, pct: f.porcentaje }))}
+          total={total}
+          etiquetaCentro={`n=${total}`}
+        />
+      )}
+    </Panel>
+  );
+}
+
 function NotaTexto() {
   return (
     <p className="mt-3 text-[11px] leading-relaxed text-muted/70">
@@ -559,4 +618,26 @@ function totalesPorSerie<T extends { equipo_id: string; total_grupo: number }>(
     totales.set(serie(f), (totales.get(serie(f)) ?? 0) + f.total_grupo);
   }
   return totales;
+}
+
+/** Suma los perfiles de todos los grupos. El denominador es la suma de los
+ *  participantes con perfil calculable de cada grupo. */
+function unirPerfiles(filas: PerfilRow[]): PerfilRow[] {
+  const totalPorGrupo = new Map<string, number>();
+  for (const f of filas) totalPorGrupo.set(f.equipo_id, f.total_grupo);
+  const total = [...totalPorGrupo.values()].reduce((a, b) => a + b, 0);
+
+  const acc = new Map<string, PerfilRow>();
+  for (const f of filas) {
+    const previo = acc.get(f.perfil);
+    acc.set(f.perfil, previo ? { ...previo, n: previo.n + f.n } : { ...f });
+  }
+  return [...acc.values()].map((f) => ({
+    ...f,
+    equipo_id: "todos",
+    equipo_codigo: "Todos los grupos",
+    equipo_nombre: null,
+    total_grupo: total,
+    porcentaje: Math.round((1000 * f.n) / total) / 10,
+  }));
 }
