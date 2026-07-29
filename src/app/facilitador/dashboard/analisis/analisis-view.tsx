@@ -98,19 +98,22 @@ export function AnalisisView({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted">Gráficas</span>
-          <Pill activo={forma === "auto"} onClick={() => setForma("auto")}>
-            Automáticas
-          </Pill>
           <Pill activo={forma === "circular"} onClick={() => setForma("circular")}>
             Circulares
+          </Pill>
+          <Pill activo={forma === "auto"} onClick={() => setForma("auto")}>
+            Mixtas
           </Pill>
           <Pill activo={forma === "barras"} onClick={() => setForma("barras")}>
             Barras
           </Pill>
           <span className="w-full text-[11px] leading-relaxed text-muted/70">
-            En circulares, las series se muestran como anillo y las escalas como medidor. Cuando
-            hay más de {MAX_PORCIONES_ANILLO} categorías la cola se agrupa para que el anillo siga
-            siendo legible; en barras se ven todas por separado.
+            <strong className="text-foreground/80">Circulares:</strong> todo en anillo, agrupando
+            la cola cuando hay más de {MAX_PORCIONES_ANILLO} categorías.{" "}
+            <strong className="text-foreground/80">Mixtas:</strong> anillo solo cuando hay pocas
+            categorías, barras cuando son muchas.{" "}
+            <strong className="text-foreground/80">Barras:</strong> todas las categorías por
+            separado. Las escalas siempre usan medidor salvo en barras.
           </span>
         </div>
       </header>
@@ -336,7 +339,10 @@ function Serie({
   const ordenadas = serie.forma === "emociones" ? filas : [...filas].sort((a, b) => b.n - a.n);
   const total = filas[0].total;
 
-  const usarAnillo = forma !== "barras";
+  // "circular" fuerza el anillo agrupando la cola; "auto" lo usa solo cuando hay
+  // pocas categorías, que es donde un anillo compara de verdad.
+  const usarAnillo =
+    forma === "circular" || (forma === "auto" && ordenadas.length <= MAX_PORCIONES_ANILLO);
 
   if (usarAnillo) {
     // Con demasiadas porciones el anillo deja de comparar nada, así que la cola
