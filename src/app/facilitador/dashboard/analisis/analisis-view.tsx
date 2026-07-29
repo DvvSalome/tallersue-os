@@ -5,6 +5,13 @@ import { optionLabel, type Item } from "@/lib/items";
 import { seccionesResueltas, type SerieResuelta } from "@/lib/mapa-colectivo";
 import { FacilitadorNav } from "@/components/facilitador-nav";
 import { K_ANON_MIN, nombreGrupo, type ClosedRow, type TextoRow } from "@/lib/analisis-grupal";
+import { Dona, Medidor } from "@/components/charts";
+
+/** Con más de esto, un anillo vuelve las porciones hilos y se pierde la
+ *  comparación: ahí las barras se leen mejor (brief §5 y §29). */
+const MAX_PORCIONES_ANILLO = 6;
+
+type Forma = "auto" | "circular" | "barras";
 
 // "Nuestro Mapa de los Sueños" — dashboard colectivo y anónimo.
 //
@@ -35,6 +42,7 @@ export function AnalisisView({
   const secciones = seccionesResueltas();
   const [grupoActivo, setGrupoActivo] = useState("");
   const [seccionActiva, setSeccionActiva] = useState(secciones[0]?.id ?? "");
+  const [forma, setForma] = useState<Forma>("auto");
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, string>();
@@ -77,9 +85,25 @@ export function AnalisisView({
           se presenta de forma agregada y anónima. No es una muestra estadística de la juventud ni
           del territorio.
         </p>
-        <div className="flex flex-wrap gap-2 text-xs text-muted/80">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted/80">
           <Chip>Mínimo {K_ANON_MIN} respuestas por grupo para publicar un resultado</Chip>
           <Chip>Del texto libre solo se muestran temas</Chip>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">Gráficas</span>
+          <Pill activo={forma === "auto"} onClick={() => setForma("auto")}>
+            Automáticas
+          </Pill>
+          <Pill activo={forma === "circular"} onClick={() => setForma("circular")}>
+            Circulares
+          </Pill>
+          <Pill activo={forma === "barras"} onClick={() => setForma("barras")}>
+            Barras
+          </Pill>
+          <span className="w-full text-[11px] leading-relaxed text-muted/70">
+            En automático, las series de hasta {MAX_PORCIONES_ANILLO} categorías se muestran como
+            anillo y las escalas como medidor; con más categorías las barras se comparan mejor.
+          </span>
         </div>
       </header>
 
@@ -135,6 +159,7 @@ export function AnalisisView({
               {seccion.series.map((serie) => (
                 <Serie
                   key={serie.clave}
+                  forma={forma}
                   serie={serie}
                   cerradas={serie.esTexto ? [] : cerradas.filter((r) => r.item === serie.item.item)}
                   textos={textos.filter((r) => r.clave === serie.clave)}
@@ -224,10 +249,12 @@ function Serie({
   serie,
   cerradas,
   textos,
+  forma,
 }: {
   serie: SerieResuelta;
   cerradas: ClosedRow[];
   textos: TextoRow[];
+  forma: Forma;
 }) {
   const titulo = serie.titulo ?? serie.item.etiqueta;
 
@@ -236,14 +263,25 @@ function Serie({
     const total = cerradas[0].total_grupo;
     const promedio = cerradas[0].promedio;
     const max = serie.item.escala?.max ?? 5;
+    const conMedidor = forma !== "barras";
     return (
       <Panel titulo={titulo} n={total} nota={serie.nota}>
-        <div className="flex items-end gap-2">
-          <span className="font-display text-3xl font-bold tabular-nums text-brand-dark">
-            {promedio ?? "—"}
-          </span>
-          <span className="pb-1 text-sm text-muted">de {max} en promedio</span>
-        </div>
+        {conMedidor ? (
+          <Medidor
+            promedio={promedio}
+            max={max}
+            n={total}
+            etiquetaMin={serie.item.escala?.etiquetaMin}
+            etiquetaMax={serie.item.escala?.etiquetaMax}
+          />
+        ) : (
+          <div className="flex items-end gap-2">
+            <span className="font-display text-3xl font-bold tabular-nums text-brand-dark">
+              {promedio ?? "—"}
+            </span>
+            <span className="pb-1 text-sm text-muted">de {max} en promedio</span>
+          </div>
+        )}
         <ul className="mt-3 flex flex-col gap-1.5">
           {Array.from({ length: max }, (_, i) => String(i + 1)).map((v) => {
             const fila = cerradas.find((r) => r.opcion === v);
@@ -290,6 +328,22 @@ function Serie({
   const ordenadas = serie.forma === "emociones" ? filas : [...filas].sort((a, b) => b.n - a.n);
   const total = filas[0].total;
 
+  const usarAnillo =
+    forma === "circular" || (forma === "auto" && ordenadas.length <= MAX_PORCIONES_ANILLO);
+
+  if (usarAnillo) {
+    return (
+      <Panel titulo={titulo} n={total} nota={serie.nota}>
+        <Dona
+          porciones={ordenadas.map((f) => ({ etiqueta: f.etiqueta, n: f.n, pct: f.pct }))}
+          total={total}
+          etiquetaCentro={`n=${total}`}
+        />
+        {serie.esTexto && <NotaTexto />}
+      </Panel>
+    );
+  }
+
   if (serie.forma === "mosaico") {
     return (
       <Panel titulo={titulo} n={total} nota={serie.nota}>
@@ -317,13 +371,17 @@ function Serie({
           <Barra key={f.etiqueta} etiqueta={f.etiqueta} n={f.n} pct={f.pct} total={f.total} />
         ))}
       </ul>
-      {serie.esTexto && (
-        <p className="mt-3 text-[11px] leading-relaxed text-muted/70">
-          ✦ Temas agrupados automáticamente a partir de las respuestas escritas. No se muestra
-          ningún texto individual.
-        </p>
-      )}
+      {serie.esTexto && <NotaTexto />}
     </Panel>
+  );
+}
+
+function NotaTexto() {
+  return (
+    <p className="mt-3 text-[11px] leading-relaxed text-muted/70">
+      ✦ Temas agrupados automáticamente a partir de las respuestas escritas. No se muestra ningún
+      texto individual.
+    </p>
   );
 }
 
