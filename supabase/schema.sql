@@ -430,10 +430,13 @@ language sql stable as $$
     count(*)::int as n,
     el.total_grupo::int,
     round(100.0 * count(*) / nullif(el.total_grupo, 0), 1) as porcentaje,
-    case when e.tipo = 'likert'
-      then round(avg(e.opcion::numeric), 2)
-      else null
-    end as promedio
+    -- El CASE debe ir DENTRO del avg(), no fuera. Postgres evalúa el argumento
+    -- del agregado en todas las filas del grupo antes de resolver un CASE
+    -- externo, así que `case when tipo='likert' then avg(opcion::numeric) end`
+    -- intentaba convertir a número opciones de texto como 'busco_informacion' y
+    -- abortaba la consulta entera. Solo se manifestaba al superar el umbral de
+    -- k-anonimato, o sea el día que un grupo real llegara a 5 respuestas.
+    round(avg(case when e.tipo = 'likert' then e.opcion::numeric end), 2) as promedio
   from exploded e
   join eligible el on el.bloque = e.bloque and el.item = e.item and el.equipo_id = e.equipo_id
   where e.opcion is not null

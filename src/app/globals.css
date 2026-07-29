@@ -623,3 +623,216 @@ select option {
   background-color: #201a2c;
   color: #f2eefb;
 }
+
+/* ==========================================================================
+   Astronauta del fondo de la portada — adaptado de Uiverse.io (JkHuger, MIT).
+   Ver src/components/astronauta.tsx para las decisiones de accesibilidad.
+   ========================================================================== */
+
+@keyframes lluvia-estrellas {
+  0%   { opacity: 0; transform: translateY(0); }
+  20%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(650px); }
+}
+
+@keyframes girar-astronauta {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.astronauta-escena .caja-estrellas {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 700px;
+  animation: lluvia-estrellas 5s linear infinite;
+}
+
+.astronauta-escena .estrella {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: #fff;
+  opacity: 0.7;
+}
+.astronauta-escena .estrella::before,
+.astronauta-escena .estrella::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background-color: #fff;
+}
+.astronauta-escena .estrella::before { width: 6px; height: 6px; top: 80px; left: 70px; opacity: 0.7; }
+.astronauta-escena .estrella::after  { width: 8px; height: 8px; top: 8px;  left: 170px; opacity: 0.9; }
+
+.astronauta-escena .astronauta {
+  position: absolute;
+  width: 250px;
+  height: 300px;
+  top: calc(50% - 150px);
+  left: calc(50% - 125px);
+  /* Más lento que el original (5s): a esa velocidad la rotación distrae de la
+     portada en lugar de acompañarla. */
+  animation: girar-astronauta 24s linear infinite;
+  /* Se integra al degradado en vez de flotar como un recorte encima. */
+  opacity: 0.5;
+  filter: drop-shadow(0 0 24px rgba(167, 139, 250, 0.35));
+}
+
+.astronauta-escena .mochila {
+  position: absolute;
+  z-index: 1;
+  width: 100px;
+  height: 150px;
+  top: calc(50% - 75px);
+  left: calc(50% - 50px);
+  background-color: #94b7ca;
+  border-radius: 50px 50px 0 0 / 30px 30px 0 0;
+}
+
+.astronauta-escena .cabeza {
+  position: absolute;
+  z-index: 3;
+  width: 97px;
+  height: 80px;
+  top: 34px;
+  left: calc(50% - 47.5px);
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e3e8eb 0 50%, #fbfdfa 50% 100%);
+}
+.astronauta-escena .cabeza::after {
+  content: "";
+  position: absolute;
+  width: 60px;
+  height: 50px;
+  top: calc(50% - 25px);
+  left: calc(50% - 30px);
+  border-radius: 15px;
+  background: linear-gradient(180deg, #15aece 0 50%, #0391bf 50% 100%);
+}
+.astronauta-escena .cabeza::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 25px;
+  top: calc(50% - 12.5px);
+  left: -4px;
+  border-radius: 5px;
+  background-color: #618095;
+  box-shadow: 92px 0 0 #618095;
+}
+
+.astronauta-escena .cuerpo {
+  position: absolute;
+  z-index: 2;
+  width: 85px;
+  height: 100px;
+  top: 105px;
+  left: calc(50% - 41px);
+  border-radius: 40px / 20px;
+  background: linear-gradient(90deg, #e3e8eb 0 50%, #fbfdfa 50% 100%);
+}
+
+.astronauta-escena .panel {
+  position: absolute;
+  width: 60px;
+  height: 40px;
+  top: 20px;
+  left: calc(50% - 30px);
+  background-color: #b7cceb;
+}
+.astronauta-escena .panel::before {
+  content: "";
+  position: absolute;
+  width: 30px;
+  height: 5px;
+  top: 9px;
+  left: 7px;
+  background-color: #fbfdfa;
+  box-shadow: 0 9px 0 #fbfdfa, 0 18px 0 #fbfdfa;
+}
+.astronauta-escena .panel::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  top: 9px;
+  right: 7px;
+  border-radius: 50%;
+  background-color: #fbfdfa;
+  box-shadow: 0 14px 0 2px #fbfdfa;
+}
+
+.astronauta-escena .brazo {
+  position: absolute;
+  z-index: 2;
+  width: 80px;
+  height: 30px;
+  top: 121px;
+}
+.astronauta-escena .brazo-izq { left: 30px;  background-color: #e3e8eb; border-radius: 0 0 0 39px; }
+.astronauta-escena .brazo-der { right: 30px; background-color: #fbfdfa; border-radius: 0 0 39px 0; }
+.astronauta-escena .brazo::before {
+  content: "";
+  position: absolute;
+  width: 30px;
+  height: 70px;
+  top: -40px;
+}
+.astronauta-escena .brazo-izq::before {
+  left: 0;
+  background-color: #e3e8eb;
+  border-radius: 50px 50px 0 120px / 50px 50px 0 110px;
+}
+.astronauta-escena .brazo-der::before {
+  right: 0;
+  background-color: #fbfdfa;
+  border-radius: 50px 50px 120px 0 / 50px 50px 110px 0;
+}
+.astronauta-escena .brazo::after {
+  content: "";
+  position: absolute;
+  width: 30px;
+  height: 10px;
+  top: -24px;
+}
+.astronauta-escena .brazo-izq::after { left: 0;  background-color: #6e91a4; }
+.astronauta-escena .brazo-der::after { right: 0; background-color: #b6d2e0; }
+
+.astronauta-escena .pierna {
+  position: absolute;
+  z-index: 2;
+  width: 30px;
+  height: 40px;
+  bottom: 70px;
+}
+.astronauta-escena .pierna-izq { left: 76px;  background-color: #e3e8eb; transform: rotate(20deg); }
+.astronauta-escena .pierna-der { right: 73px; background-color: #fbfdfa; transform: rotate(-20deg); }
+.astronauta-escena .pierna::before {
+  content: "";
+  position: absolute;
+  width: 50px;
+  height: 25px;
+  bottom: -26px;
+}
+.astronauta-escena .pierna-izq::before {
+  left: -20px;
+  background-color: #e3e8eb;
+  border-radius: 30px 0 0 0;
+  border-bottom: 10px solid #6d96ac;
+}
+.astronauta-escena .pierna-der::before {
+  right: -20px;
+  background-color: #fbfdfa;
+  border-radius: 0 30px 0 0;
+  border-bottom: 10px solid #b0cfe4;
+}
+
+/* Quien pidió menos movimiento en su sistema ve la escena quieta: una rotación
+   permanente puede marear o disparar migraña. */
+@media (prefers-reduced-motion: reduce) {
+  .astronauta-escena .caja-estrellas,
+  .astronauta-escena .astronauta {
+    animation: none;
+  }
+}

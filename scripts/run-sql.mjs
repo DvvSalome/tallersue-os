@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Client } from "pg";
+import { resolve6, resolve4 } from "node:dns/promises";
 
 function loadEnvLocal() {
   const raw = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
@@ -34,7 +35,43 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
+// El host directo de Supabase solo publica registro AAAA. Cuando la red no
+// tiene ruta IPv6 global, macOS filtra ese resultado y Node falla con ENOTFOUND
+// aunque `host -t AAAA` sí resuelva. En ese caso se resuelve la dirección a mano
+// y se conecta al literal: el certificado no se valida por nombre porque ya se
+// usa rejectUnauthorized:false para la cadena del pooler de Supabase.
+async function construirCliente() {
+  const base = { connectionString, ssl: { rejectUnauthorized: false } };
+  const host = new URL(connectionString).hostname;
+  try {
+    await resolve4(host);
+    return new Client(base);
+  } catch {
+    // sin A record: intentar IPv6 explícito
+  }
+  try {
+    const [ipv6] = await resolve6(host);
+    if (ipv6) {
+      console.log(`Nota: ${host} solo tiene IPv6; conectando a [${ipv6}]`);
+      // `connectionString` gana sobre `host`, así que hay que pasar los campos
+      // por separado para que el literal surta efecto.
+      const u = new URL(connectionString);
+      return new Client({
+        user: decodeURIComponent(u.username),
+        password: decodeURIComponent(u.password),
+        host: ipv6,
+        port: Number(u.port || 5432),
+        database: u.pathname.replace(/^\//, "") || "postgres",
+        ssl: { rejectUnauthorized: false },
+      });
+    }
+  } catch {
+    // se deja fallar con el mensaje original de pg
+  }
+  return new Client(base);
+}
+
+const client = await construirCliente();
 
 try {
   await client.connect();

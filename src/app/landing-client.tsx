@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SolarSystem } from "@/components/solar-system";
+import { Astronauta } from "@/components/astronauta";
 
 export function LandingClient() {
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,7 @@ export function LandingClient() {
       ref={sceneRef}
       className="perspective-scene relative flex min-h-full flex-1 flex-col items-center justify-center overflow-hidden px-6 py-12"
     >
+      <Astronauta />
       {/* Floating 3D shapes */}
       <div
         aria-hidden
