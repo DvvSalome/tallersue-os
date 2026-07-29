@@ -505,20 +505,21 @@ drop policy if exists users_update_own on public.users;
 create policy users_update_own on public.users
   for update to authenticated using (id = auth.uid());
 
--- facilitadores read the participants of the equipos within their scope
--- (comuna_id NULL on the facilitador row = access to all comunas). Scoping by
--- the EQUIPO's comuna and not by users.comuna_id is deliberate: the latter is
--- self-declared for support lines, so a participant who lives in another comuna
--- must still be visible to the facilitador running their workshop.
+-- A facilitador reads the participant rows. There is NO comuna filter here, on
+-- purpose: comuna is not a workshop concept (it is self-declared by the
+-- participant and only feeds `lineas_atencion`), so gating access by it made no
+-- sense. `facilitadores.comuna_id` is kept for reference but no longer gates
+-- anything.
+--
+-- This policy must NOT reference public.equipos: the policy on `equipos` refers
+-- back to `users` (so a participant can read their own equipo), and touching
+-- equipos from here creates a cycle that Postgres rejects at query time with
+-- "infinite recursion detected in policy for relation users" — which broke
+-- every write a participant attempted.
 drop policy if exists users_select_facilitador on public.users;
 create policy users_select_facilitador on public.users
   for select to authenticated using (
-    exists (
-      select 1 from public.facilitadores f
-      join public.equipos e on e.id = users.equipo_id
-      where f.id = auth.uid()
-        and (f.comuna_id is null or f.comuna_id = e.comuna_id)
-    )
+    exists (select 1 from public.facilitadores f where f.id = auth.uid())
   );
 
 -- facilitadores: a facilitador can read only their own row (no cross-group
@@ -535,11 +536,7 @@ create policy facilitadores_select_own on public.facilitadores
 drop policy if exists equipos_select_facilitador on public.equipos;
 create policy equipos_select_facilitador on public.equipos
   for select to authenticated using (
-    exists (
-      select 1 from public.facilitadores f
-      where f.id = auth.uid()
-        and (f.comuna_id is null or f.comuna_id = equipos.comuna_id)
-    )
+    exists (select 1 from public.facilitadores f where f.id = auth.uid())
     or exists (
       select 1 from public.users u where u.id = auth.uid() and u.equipo_id = equipos.id
     )
@@ -548,21 +545,13 @@ create policy equipos_select_facilitador on public.equipos
 drop policy if exists equipos_insert_facilitador on public.equipos;
 create policy equipos_insert_facilitador on public.equipos
   for insert to authenticated with check (
-    exists (
-      select 1 from public.facilitadores f
-      where f.id = auth.uid()
-        and (f.comuna_id is null or f.comuna_id = equipos.comuna_id)
-    )
+    exists (select 1 from public.facilitadores f where f.id = auth.uid())
   );
 
 drop policy if exists equipos_update_facilitador on public.equipos;
 create policy equipos_update_facilitador on public.equipos
   for update to authenticated using (
-    exists (
-      select 1 from public.facilitadores f
-      where f.id = auth.uid()
-        and (f.comuna_id is null or f.comuna_id = equipos.comuna_id)
-    )
+    exists (select 1 from public.facilitadores f where f.id = auth.uid())
   );
 
 -- responses: participant reads/writes only their own answers.
@@ -578,17 +567,12 @@ drop policy if exists responses_update_own on public.responses;
 create policy responses_update_own on public.responses
   for update to authenticated using (user_id = auth.uid());
 
--- responses: facilitador reads answers of participants in their equipos.
+-- responses: a facilitador reads the answers. Same reasoning as above — no
+-- comuna filter, and no reference to equipos/users to avoid policy cycles.
 drop policy if exists responses_select_facilitador on public.responses;
 create policy responses_select_facilitador on public.responses
   for select to authenticated using (
-    exists (
-      select 1 from public.users u
-      join public.equipos e on e.id = u.equipo_id
-      join public.facilitadores f on f.id = auth.uid()
-      where u.id = responses.user_id
-        and (f.comuna_id is null or f.comuna_id = e.comuna_id)
-    )
+    exists (select 1 from public.facilitadores f where f.id = auth.uid())
   );
 
 -- respuestas_abiertas: mismas reglas que `responses`. El participante
@@ -608,13 +592,7 @@ create policy respuestas_abiertas_update_own on public.respuestas_abiertas
 drop policy if exists respuestas_abiertas_select_facilitador on public.respuestas_abiertas;
 create policy respuestas_abiertas_select_facilitador on public.respuestas_abiertas
   for select to authenticated using (
-    exists (
-      select 1 from public.users u
-      join public.equipos e on e.id = u.equipo_id
-      join public.facilitadores f on f.id = auth.uid()
-      where u.id = respuestas_abiertas.user_id
-        and (f.comuna_id is null or f.comuna_id = e.comuna_id)
-    )
+    exists (select 1 from public.facilitadores f where f.id = auth.uid())
   );
 
 -- Note: v_participant_progress and v_group_analysis_closed/_texto run with
@@ -658,11 +636,5 @@ drop policy if exists evidencias_select_facilitador on storage.objects;
 create policy evidencias_select_facilitador on storage.objects
   for select to authenticated using (
     bucket_id = 'evidencias'
-    and exists (
-      select 1 from public.users u
-      join public.equipos e on e.id = u.equipo_id
-      join public.facilitadores f on f.id = auth.uid()
-      where u.id::text = (storage.foldername(objects.name))[1]
-        and (f.comuna_id is null or f.comuna_id = e.comuna_id)
-    )
+    and exists (select 1 from public.facilitadores f where f.id = auth.uid())
   );

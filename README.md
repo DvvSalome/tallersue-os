@@ -109,13 +109,17 @@ documentadas:
    ("Puedes decidir…"). El perfil de liderazgo se presenta como orientación de
    este momento, no como definición de la persona.
 
-6. **La comuna del participante es solo para las líneas de atención.** La
-   declara la persona al entrar y su único uso es filtrar `lineas_atencion`
-   para mostrarle puntos de apoyo cerca de donde vive. No decide qué ve su
-   facilitador/a ni cómo se agrupa el análisis: la unidad territorial del
-   taller es el `equipo` y la comuna que el facilitador le asignó al crear el
-   código. Así, quien vive en otra comuna sigue contando en el grupo al que
-   efectivamente asistió.
+6. **La comuna no es un concepto del taller.** La declara el participante al
+   entrar y su único uso es filtrar `lineas_atencion` para mostrarle puntos de
+   apoyo cerca de donde vive. No controla el acceso del facilitador (ninguna
+   política de RLS la mira) ni aparece en el instrumento. El eje territorial de
+   los agregados es la comuna del `equipo`, que el facilitador asigna al crear
+   el código y que es independiente de dónde viva cada joven.
+
+   Cuidado al tocar las políticas de `users`: no deben referenciar `equipos`,
+   porque la política de `equipos` referencia `users` y el ciclo hace que
+   Postgres falle en tiempo de consulta con *infinite recursion detected in
+   policy for relation users*, rompiendo toda escritura del participante.
 
 7. **Reglas parametrizadas.** Pesos de los índices, puntajes por opción y la
    matriz *hallazgo → necesidad → recurso → acción* están declarados como
