@@ -26,29 +26,48 @@ insert into public.comunas (id, nombre) values
 on conflict (id) do update set nombre = excluded.nombre;
 
 -- ----------------------------------------------------------------------------
--- 2. Catálogo de los 14 ítems (4 bloques)
+-- 2. Catálogo del instrumento — VERSIÓN 2 (20 preguntas, 5 bloques)
 -- ----------------------------------------------------------------------------
-insert into public.item_catalog (bloque, item, clave, tipo, etiqueta) values
-  -- Bloque 1 — Autoevaluación emocional
-  (1, 1,  'estado_animo',        'likert',  '¿Cómo te sientes hoy? (1 = muy mal, 5 = muy bien)'),
-  (1, 2,  'fortalezas',          'multiple','¿Cuáles son tus fortalezas?'),
-  (1, 3,  'palabra_representa',  'texto',   'Una palabra que te representa'),
-  (1, 4,  'sabor',               'multiple','Si tu momento actual fuera un sabor, ¿cuál sería?'),
-  -- Bloque 2 — Diagnóstico territorial
-  (2, 5,  'necesidades_barrio',  'multiple','¿Qué necesita tu barrio?'),
-  (2, 6,  'necesidad_principal', 'unica',   'De todo lo anterior, ¿cuál es la necesidad principal?'),
-  (2, 7,  'evidencia',           'adjunto', 'Sube una evidencia (foto) de esa necesidad'),
-  -- Bloque 3 — Visión temporal
-  (3, 8,  'cuando_cambio',       'multiple','¿Cuándo te gustaría ver ese cambio?'),
-  (3, 9,  'recursos_necesarios', 'multiple','¿Qué recursos se necesitan para lograrlo?'),
-  (3, 10, 'quien_apoyaria',      'multiple','¿Quién podría apoyar este cambio?'),
-  (3, 11, 'sintesis_personal',   'texto',   'Resume tu visión en una frase (máx. 200 caracteres)'),
-  -- Bloque 4 — Propuestas colectivas
-  (4, 12, 'idea_cambio',         'texto',   '¿Cuál es tu idea de cambio para el barrio?'),
-  (4, 13, 'donde_implementar',   'multiple','¿Dónde se podría implementar esta idea?'),
-  (4, 14, 'pacto_compromiso',    'texto',   'Tu pacto o compromiso personal')
-on conflict (bloque, item) do update set
-  clave = excluded.clave, tipo = excluded.tipo, etiqueta = excluded.etiqueta;
+-- Refleja src/lib/items.ts. Las 14 filas de la v1 NO se tocan: quedan como
+-- histórico para que las respuestas ya escritas conserven su significado
+-- (doc §5). Publicar un instrumento nuevo = insertar una versión nueva aquí.
+--
+-- `tipo = 'texto'` marca las preguntas ABIERTAS PURAS (solo P20): su contenido
+-- vive en `respuestas_abiertas`, no en `responses`. Los campos de
+-- observaciones de las preguntas cerradas no son filas del catálogo: son
+-- parte de la definición del ítem en items.ts y se guardan por `clave`.
+
+insert into public.item_catalog (version, bloque, item, clave, tipo, etiqueta, dimension) values
+  -- Bloque 1 — Identidad, Autoeficacia y Potencial
+  (2, 1, 1,  'afrontamiento',            'unica',   'Cuando aparece una dificultad importante, ¿qué sueles hacer primero?',                                                              'agencia_personal'),
+  (2, 1, 2,  'autoeficacia',             'likert',  '¿Qué tan capaz te sientes actualmente de hacer cosas concretas que te acerquen a tus metas?',                                       'agencia_personal'),
+  (2, 1, 3,  'emocion_futuro',           'unica',   '¿Qué emoción predomina cuando piensas en tu futuro?',                                                                               'bienestar_prospectivo'),
+  (2, 1, 4,  'mayor_fortaleza',          'unica',   '¿Cuál consideras que es hoy tu mayor fortaleza?',                                                                                   'agencia_personal'),
+  -- Bloque 2 — Sueños, Derechos y Oportunidades
+  (2, 2, 5,  'sueno_principal',          'multiple','¿Cuál es tu principal sueño actualmente?',                                                                                          'proyecto_vida'),
+  (2, 2, 6,  'posibilidad_sueno',        'likert',  '¿Qué tan posible crees que es avanzar hacia ese sueño?',                                                                            'proyecto_vida'),
+  (2, 2, 7,  'quien_ayuda',              'unica',   '¿Quién crees que más puede ayudarte a cumplir ese sueño?',                                                                          'capital_social'),
+  (2, 2, 8,  'instituciones_conocidas',  'multiple','¿Conoces instituciones que apoyen a los jóvenes?',                                                                                  'capital_social'),
+  -- Bloque 3 — Radar: Cartografía Personal y Territorial
+  (2, 3, 9,  'habito_barrera',           'multiple','¿Qué hábito consideras que más te dificulta alcanzar tus metas?',                                                                    'contexto_transformacion'),
+  (2, 3, 10, 'barreras_familiares',      'multiple','¿Qué situaciones familiares dificultan más tus proyectos?',                                                                          'contexto_transformacion'),
+  (2, 3, 11, 'problemas_comunidad',      'multiple','¿Cuáles son los principales problemas de tu comunidad?',                                                                            'contexto_transformacion'),
+  (2, 3, 12, 'institucion_exigida',      'multiple','¿Qué institución debería hacer más por los jóvenes?',                                                                               'ciudadania_activa'),
+  -- Bloque 4 — Ciudadanía y Democracia
+  (2, 4, 13, 'espacios_participacion',   'multiple','¿Has participado alguna vez en alguno de estos espacios?',                                                                          'ciudadania_activa'),
+  (2, 4, 14, 'derecho_prioritario',      'unica',   '¿Qué derecho consideras que necesita mayor protección para los jóvenes?',                                                           'ciudadania_activa'),
+  (2, 4, 15, 'confianza_institucional',  'likert',  '¿Qué tanto confías en que las instituciones públicas pueden responder de manera efectiva a las necesidades de la ciudadanía?',      'ciudadania_activa'),
+  (2, 4, 16, 'prioridad_alcaldia',       'unica',   '¿Qué problema resolverías primero si fueras alcalde o alcaldesa?',                                                                   'ciudadania_activa'),
+  -- Bloque 5 — Del Sueño a la Acción
+  (2, 5, 17, 'primer_paso',              'unica',   '¿Cuál será el primer paso para acercarte a tu meta?',                                                                               'agencia_personal'),
+  (2, 5, 18, 'necesidades_logro',        'multiple','¿Qué necesitas para lograrlo?',                                                                                                     'capital_social'),
+  (2, 5, 19, 'intereses_iniciativas',    'multiple','¿En qué tipo de iniciativas te gustaría participar?',                                                                               'ciudadania_activa'),
+  (2, 5, 20, 'mensaje_decisores',        'texto',   'Si pudieras enviar un mensaje a quienes toman decisiones sobre las juventudes, ¿qué les dirías?',                                    'ciudadania_activa')
+on conflict (version, bloque, item) do update set
+  clave = excluded.clave,
+  tipo = excluded.tipo,
+  etiqueta = excluded.etiqueta,
+  dimension = excluded.dimension;
 
 -- ----------------------------------------------------------------------------
 -- 3. Líneas de atención — ejemplo de datos maestros

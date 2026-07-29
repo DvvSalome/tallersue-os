@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# El Taller de los Sueños
 
-## Getting Started
+Sistema de orientación personal e inteligencia cívica para jóvenes en
+Medellín — instrumento de **5 bloques / 20 preguntas** más dos dashboards:
+*Mi Brújula de los Sueños* (personal y privado) y *Nuestro Mapa de los Sueños*
+(colectivo y anónimo). Los participantes entran con un
+**código de equipo** (sin cuenta personal, vía Supabase Anonymous Auth); los
+facilitadores crean esos códigos y ven el dashboard. Next.js (App Router) +
+Supabase (Postgres, Auth, Storage), desplegado en Vercel.
 
-First, run the development server:
+## Setup
+
+Sigue **[SUPABASE_SETUP.html](./SUPABASE_SETUP.html)** para crear el proyecto
+de Supabase, cargar el schema y los datos maestros, activar el login anónimo
+(**obligatorio** para que "Ya soy participante" funcione) y crear cuentas de
+facilitador. Resumen rápido si Supabase ya está provisionado y `.env.local`
+existe:
 
 ```bash
+npm install
+npm run db:migrate   # aplica supabase/schema.sql + supabase/seed.sql
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app/participar/` — un participante entra con código de equipo + apodo +
+  edad + su comuna (sin contraseña; sesión = Supabase Anonymous Auth).
+- `src/app/home/`, `formulario/`, `resultados/` — flujo del participante
+  (líneas de atención, las 20 preguntas y su Brújula personal).
+- `src/app/facilitador/` — login con contraseña + dashboard (participantes,
+  Nuestro Mapa, y `equipos/` para crear/gestionar códigos de equipo).
+- `src/lib/items.ts` — fuente única de verdad del instrumento: 5 bloques,
+  20 preguntas, opciones parametrizadas, campo opcional de observaciones por
+  pregunta y la dimensión a la que aporta cada una.
+- `src/lib/brujula.ts` — motor del dashboard personal: los 5 índices, el FODA,
+  el perfil de liderazgo y las recomendaciones (máximo 3).
+- `src/lib/mapa-colectivo.ts` — qué preguntas alimentan cada pregunta
+  colectiva del dashboard grupal.
+- `src/lib/analisis-grupal.ts` — contrato compartido de los agregados y el
+  umbral de k-anonimato.
+- `src/lib/respuestas.ts` — forma de almacenamiento de una respuesta cerrada,
+  accesores y validación de entrada.
+- `src/lib/categorize.ts` — clasificador por palabras clave para texto libre
+  (nunca se expone el texto crudo en los agregados grupales).
+- `src/lib/team-code.ts` — generador del código corto que identifica a un
+  equipo.
+- `supabase/schema.sql` — tablas (incl. `equipos`), RLS, vistas/funciones de
+  análisis, bucket de Storage.
+- `supabase/seed.sql` — 16 comunas de Medellín, catálogo de ítems, líneas de
+  atención de ejemplo.
+- `scripts/create-facilitador.mjs` — crea una cuenta de facilitador/organizador
+  (código de grupo + contraseña compartida). Los códigos de equipo para
+  participantes se crean desde el panel, no por script.
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm run db:migrate` | Corre `schema.sql` + `seed.sql` contra Supabase |
+| `npm run facilitador:create -- <codigo> <password> [comuna_id\|all] [nombre]` | Crea un facilitador |
+| `npm run verify:catalog` | Comprueba que `items.ts` y `seed.sql` describan el mismo instrumento |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+El proyecto está enlazado a Vercel con Supabase provisionado vía Marketplace
+(variables de entorno ya sincronizadas):
 
-## Deploy on Vercel
+```bash
+vercel deploy          # preview
+vercel deploy --prod   # producción
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Reglas de negocio del instrumento
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vienen del Documento Técnico de Implementación y están codificadas, no solo
+documentadas:
+
+1. **Instrumento versionado.** `item_catalog` y `responses` llevan `version`.
+   Publicar preguntas nuevas es insertar una versión nueva, nunca reinterpretar
+   filas ya escritas: la v1 (14 ítems) queda intacta como histórico. Cambiar el
+   cuestionario en sitio está explícitamente descartado.
+
+2. **Las respuestas abiertas se almacenan aparte.** Las cerradas van a
+   `responses`; todo el texto libre —los campos de observaciones y la pregunta
+   abierta pura P20— va a `respuestas_abiertas`, sin duplicarse. Ese
+   repositorio queda disponible para el análisis posterior con IA que plantea
+   el documento; el dashboard en vivo no depende de ningún proveedor externo.
+
+3. **Anonimización antes de agregar.** Ningún agregado se muestra para una
+   comuna con menos de 5 respuestas (`K_ANON_MIN`, replicado en las funciones
+   SQL), y del texto libre solo se publica la categoría codificada, nunca lo
+   que escribió una persona. La exportación del facilitador no incluye apodo,
+   `user_id` ni texto crudo.
+
+4. **Sin datos ≠ puntaje bajo.** Un índice sin respuestas suficientes devuelve
+   `null` y se muestra como "sin datos suficientes". "Prefiero no responder"
+   nunca se cuenta como puntaje bajo.
+
+5. **Registro no diagnóstico.** El dashboard personal no etiqueta, no predice y
+   no patologiza. Todo el texto que se muestra sale del motor de reglas de
+   `brujula.ts`, acotado a reconocer ("Identificas…"), orientar ("Podría ser
+   útil…"), movilizar ("Un siguiente paso posible…") y devolver agencia
+   ("Puedes decidir…"). El perfil de liderazgo se presenta como orientación de
+   este momento, no como definición de la persona.
+
+6. **La comuna del participante es solo para las líneas de atención.** La
+   declara la persona al entrar y su único uso es filtrar `lineas_atencion`
+   para mostrarle puntos de apoyo cerca de donde vive. No decide qué ve su
+   facilitador/a ni cómo se agrupa el análisis: la unidad territorial del
+   taller es el `equipo` y la comuna que el facilitador le asignó al crear el
+   código. Así, quien vive en otra comuna sigue contando en el grupo al que
+   efectivamente asistió.
+
+7. **Reglas parametrizadas.** Pesos de los índices, puntajes por opción y la
+   matriz *hallazgo → necesidad → recurso → acción* están declarados como
+   tablas de datos al inicio de cada sección de `brujula.ts`. Ajustar la
+   métrica es editar una tabla.

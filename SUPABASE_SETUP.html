@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>El Taller de los Sueños — Guía de configuración de Supabase</title>
+<style>
+  :root {
+    --brand: #7c3aed;
+    --brand-dark: #5b21b6;
+    --bg: #faf8fc;
+    --fg: #241f2e;
+    --muted: #6b6478;
+    --card: #ffffff;
+    --border: #e7e2f0;
+    --code-bg: #1e1b29;
+    --code-fg: #f2eefb;
+    --ok: #059669;
+    --warn: #b45309;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16121d;
+      --fg: #f2eefb;
+      --card: #201a2c;
+      --border: #362d47;
+      --muted: #b3a9c4;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+  }
+  .layout {
+    display: flex;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  nav {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    width: 240px;
+    flex-shrink: 0;
+    padding: 32px 16px;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  nav a {
+    display: block;
+    padding: 6px 10px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  nav a:hover { background: var(--border); color: var(--fg); }
+  main { flex: 1; min-width: 0; padding: 32px 24px 80px; }
+  header.hero {
+    padding: 8px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  h1 { font-size: 28px; margin: 0 0 8px; color: var(--brand-dark); }
+  h2 {
+    font-size: 20px;
+    margin-top: 48px;
+    padding-top: 8px;
+    color: var(--brand-dark);
+    border-top: 1px solid var(--border);
+  }
+  h2:first-of-type { border-top: none; margin-top: 24px; }
+  h3 { font-size: 16px; margin-top: 24px; }
+  p.lead { color: var(--muted); font-size: 16px; max-width: 60ch; }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--brand);
+    color: white;
+    margin-right: 8px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .card.warn { border-color: #d97706; }
+  .card.ok { border-color: var(--ok); }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 14px 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--border);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  ol, ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .toc-step { color: var(--brand); font-weight: 600; }
+  details {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin: 10px 0;
+  }
+  summary { cursor: pointer; font-weight: 600; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 60px; }
+  @media (max-width: 800px) {
+    .layout { flex-direction: column; }
+    nav { position: static; width: auto; max-height: none; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <a href="#intro">Introducción</a>
+    <a href="#paso1">1. Crear el proyecto Supabase</a>
+    <a href="#paso2">2. Ejecutar el schema SQL</a>
+    <a href="#paso3">3. Activar inicio anónimo</a>
+    <a href="#paso4">4. Cargar datos maestros</a>
+    <a href="#paso5">5. Crear facilitadores/organizadores</a>
+    <a href="#paso6">6. Variables de entorno</a>
+    <a href="#paso7">7. Correr la app en local</a>
+    <a href="#paso8">8. Storage (evidencias)</a>
+    <a href="#paso9">9. Desplegar en Vercel</a>
+    <a href="#troubleshooting">Troubleshooting</a>
+  </nav>
+  <main>
+    <header class="hero" id="intro">
+      <h1>El Taller de los Sueños — Setup de Supabase</h1>
+      <p class="lead">
+        Guía paso a paso para dejar corriendo la base de datos, autenticación
+        y la app de Next.js, de cero a funcional.
+      </p>
+      <div class="card ok">
+        <strong>Dos caminos, mismo resultado:</strong>
+        <p style="margin:6px 0 0">
+          <strong>A. Con Vercel (recomendado):</strong> el proyecto ya está enlazado a Vercel
+          y Supabase se provisiona automáticamente desde el Marketplace — un solo comando,
+          sin salir de la terminal.<br/>
+          <strong>B. Manual:</strong> crear el proyecto directamente en
+          <code>supabase.com</code> y copiar las llaves a mano. Útil si no usas Vercel.
+        </p>
+      </div>
+    </header>
+
+    <h2 id="paso1"><span class="badge">Paso 1</span>Crear el proyecto en Supabase</h2>
+
+    <h3>Camino A — Vercel Marketplace (recomendado)</h3>
+    <p>Si el repo ya está enlazado a un proyecto de Vercel (<code>vercel link</code>), un solo comando crea el proyecto de Supabase, lo conecta y descarga las variables de entorno:</p>
+    <pre><code>vercel link
+vercel integration add supabase --non-interactive</code></pre>
+    <p>
+      La primera vez te pedirá aceptar los términos de la integración en el navegador
+      (se abre una URL <code>vercel.com/.../accept-terms/supabase</code>). Acepta y vuelve a
+      correr el mismo comando — quedará provisionado y conectado al proyecto.
+    </p>
+    <pre><code>vercel env pull .env.local --yes</code></pre>
+
+    <h3>Camino B — Manual desde el dashboard</h3>
+    <ol>
+      <li>Entra a <code>supabase.com</code> → <em>New project</em>.</li>
+      <li>Elige una organización, nombre (ej. <code>taller-de-los-suenos</code>), contraseña
+        de base de datos y región cercana (ej. <code>us-east-1</code> o <code>sa-east-1</code>).</li>
+      <li>Espera ~2 minutos a que aprovisione.</li>
+      <li>En <em>Project Settings → API</em>, copia:
+        <ul>
+          <li><code>Project URL</code> → <code>NEXT_PUBLIC_SUPABASE_URL</code></li>
+          <li><code>anon public</code> key → <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></li>
+          <li><code>service_role</code> key → <code>SUPABASE_SERVICE_ROLE_KEY</code> (secreta, solo servidor)</li>
+        </ul>
+      </li>
+      <li>En <em>Project Settings → Database</em>, copia la <code>Connection string</code>
+        (modo <em>Session pooler</em> o <em>Direct connection</em>) → <code>POSTGRES_URL_NON_POOLING</code>.</li>
+    </ol>
+    <p>Pega todo eso en un archivo <code>.env.local</code> en la raíz del proyecto (ver <a href="#paso5">Paso 5</a>).</p>
+
+    <h2 id="paso2"><span class="badge">Paso 2</span>Ejecutar el schema SQL</h2>
+    <p>
+      El archivo <code>supabase/schema.sql</code> crea las tablas
+      (<code>comunas</code>, <code>equipos</code>, <code>users</code>, <code>facilitadores</code>,
+      <code>responses</code>, <code>item_catalog</code>, <code>lineas_atencion</code>), las
+      vistas/funciones de análisis, el bucket de Storage para evidencias, y activa
+      <strong>Row Level Security</strong> en todo.
+    </p>
+
+    <h3>Opción rápida — script incluido</h3>
+    <pre><code>npm install
+npm run db:migrate</code></pre>
+    <p>Esto corre <code>supabase/schema.sql</code> seguido de <code>supabase/seed.sql</code> contra
+      <code>POSTGRES_URL_NON_POOLING</code> (lee <code>.env.local</code>). Es seguro volver a
+      correrlo: usa <code>if not exists</code>, <code>drop policy if exists</code> y
+      <code>on conflict</code> en todas partes.</p>
+
+    <h3>Opción manual — SQL Editor de Supabase</h3>
+    <ol>
+      <li>Abre tu proyecto en <code>supabase.com</code> → <em>SQL Editor</em> → <em>New query</em>.</li>
+      <li>Pega el contenido completo de <code>supabase/schema.sql</code> y dale <em>Run</em>.</li>
+      <li>Repite con <code>supabase/seed.sql</code>.</li>
+    </ol>
+
+    <h2 id="paso3"><span class="badge">Paso 3</span>Activar inicio de sesión anónimo (obligatorio)</h2>
+    <div class="card warn">
+      <strong>Sin este paso, "Ya soy participante" no funciona.</strong> Los participantes
+      entran con un <strong>código de equipo</strong> (sin correo, sin contraseña personal) —
+      por dentro usan
+      <a href="https://supabase.com/docs/guides/auth/auth-anonymous" target="_blank" rel="noopener">Supabase Anonymous Sign-ins</a>,
+      que viene <strong>desactivado por defecto</strong> y solo se activa desde el dashboard
+      (no hay forma de hacerlo por SQL ni por el CLI).
+    </div>
+    <ol>
+      <li>Ve a <code>supabase.com/dashboard/project/&lt;tu-project-ref&gt;/auth/providers</code>
+        (o Authentication → Providers en el menú).</li>
+      <li>Busca <strong>"Allow anonymous sign-ins"</strong> y actívalo.</li>
+      <li>Guarda. No requiere redeploy — el cambio aplica de inmediato.</li>
+    </ol>
+    <p>Para confirmar que quedó activo, prueba desde una terminal con Node:</p>
+    <pre><code>node -e "
+require('@supabase/supabase-js').createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+).auth.signInAnonymously().then(({data,error}) => console.log(error?.message ?? 'OK', data?.user?.id));
+"</code></pre>
+    <p>Si imprime <code>OK &lt;uuid&gt;</code>, quedó activo. Si dice <code>Anonymous sign-ins are disabled</code>, revisa el paso anterior.</p>
+
+    <h2 id="paso4"><span class="badge">Paso 4</span>Cargar datos maestros</h2>
+    <p><code>supabase/seed.sql</code> incluye:</p>
+    <ul>
+      <li>Las <strong>16 comunas</strong> de Medellín (id 1–16).</li>
+      <li>El <strong>catálogo de los 14 ítems</strong> (4 bloques) — solo metadatos
+        (clave/tipo/etiqueta); las opciones de cada pregunta viven en
+        <code>src/lib/items.ts</code> en el código, no en la base de datos.</li>
+      <li>Un set de ejemplo de <strong>líneas de atención</strong> (salud mental, salud
+        sexual, violencia, orientación general), algunas nacionales
+        (<code>comuna_id = NULL</code>) y otras por comuna.</li>
+    </ul>
+    <div class="card warn">
+      <strong>Importante:</strong> las líneas de atención de ejemplo son ilustrativas.
+      Reemplázalas por los datos reales de tu equipo antes de un despliegue real —
+      puedes editar <code>supabase/seed.sql</code> y volver a correr
+      <code>npm run db:migrate</code>, o hacer <code>insert</code>/<code>update</code>
+      directamente en el SQL Editor.
+    </div>
+
+    <h2 id="paso5"><span class="badge">Paso 5</span>Crear facilitadores/organizadores</h2>
+    <p>
+      Los facilitadores no se auto-registran desde la app — se crean con un script que
+      usa la <code>service_role key</code>. Cada facilitador tiene un
+      <strong>código de grupo</strong> y una <strong>contraseña compartida</strong> (login
+      separado del de participantes, sin cambios respecto al modelo de team-codes).
+    </p>
+    <pre><code># Facilitador con acceso a UNA comuna (ej. comuna 13, San Javier)
+npm run facilitador:create -- GRUPO-SANJAVIER "unaClaveSegura123" 13 "Equipo San Javier"
+
+# Facilitador/coordinador con acceso a TODAS las comunas
+npm run facilitador:create -- COORDINACION "otraClaveSegura456" all "Coordinación general"</code></pre>
+    <p>Comparte el código de grupo y la contraseña por un canal seguro (no por la app).
+      El login de facilitador está en <code>/facilitador/login</code>.</p>
+    <p>
+      Una vez adentro, el facilitador también actúa como <strong>organizador</strong>: en
+      la pestaña <em>"Códigos de equipo"</em> (<code>/facilitador/dashboard/equipos</code>)
+      crea los códigos que los participantes usan para entrar — no hace falta ningún script
+      para esto, es autoservicio desde el panel.
+    </p>
+
+    <h2 id="paso6"><span class="badge">Paso 6</span>Variables de entorno</h2>
+    <p>Si usaste el <strong>Camino A</strong> (Vercel), <code>vercel env pull .env.local --yes</code>
+      ya te dejó todo listo. Si fue manual, tu <code>.env.local</code> debe verse así:</p>
+    <pre><code>NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...          # secreta — solo server-side
+POSTGRES_URL_NON_POOLING=postgres://postgres.xxxx:PASSWORD@aws-0-xxxx.pooler.supabase.com:5432/postgres?sslmode=require</code></pre>
+    <table>
+      <tr><th>Variable</th><th>Dónde se usa</th></tr>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Cliente browser y servidor</td></tr>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Cliente browser y servidor (respeta RLS)</td></tr>
+      <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Solo <code>scripts/*.mjs</code> y rutas de registro (crear usuarios de Auth) — <strong>nunca</strong> en el cliente</td></tr>
+      <tr><td><code>POSTGRES_URL_NON_POOLING</code></td><td>Solo <code>scripts/run-sql.mjs</code> para correr migraciones</td></tr>
+    </table>
+    <div class="card warn">
+      <strong>Nunca commitees <code>.env.local</code>.</strong> Ya está en
+      <code>.gitignore</code> por defecto (lo agrega <code>create-next-app</code>).
+    </div>
+
+    <h2 id="paso7"><span class="badge">Paso 7</span>Correr la app en local</h2>
+    <pre><code>npm install
+npm run db:migrate            # si no lo habías corrido
+npm run dev</code></pre>
+    <p>Abre <code>http://localhost:3000</code>. Deberías poder:</p>
+    <ul>
+      <li>Iniciar sesión como facilitador en <code>/facilitador/login</code> con la cuenta
+        creada en el <a href="#paso5">Paso 5</a>, e ir a <em>Códigos de equipo</em> para
+        crear uno.</li>
+      <li>Entrar como participante en <code>/participar</code> con ese código + un apodo
+        (sin correo, sin contraseña personal — falla si el <a href="#paso3">Paso 3</a> no
+        está activo).</li>
+      <li>Ver la home con las líneas de atención de la comuna del equipo.</li>
+      <li>Responder el formulario de 4 bloques / 14 ítems y descargar el CSV de resultados
+        propios al terminar.</li>
+    </ul>
+
+    <h2 id="paso8"><span class="badge">Paso 8</span>Storage para evidencias (fotos)</h2>
+    <p>
+      El ítem 7 (evidencia del bloque 2) sube una foto opcional al bucket privado
+      <code>evidencias</code>, creado automáticamente por <code>schema.sql</code>. Cada
+      archivo se guarda en <code>&lt;user_id&gt;/&lt;archivo&gt;</code> y las políticas de
+      Storage RLS restringen el acceso igual que en la tabla <code>responses</code>: el
+      participante solo ve su propia carpeta, el facilitador ve las carpetas de su comuna.
+      No necesitas configurar nada adicional — si el bucket no aparece en
+      <em>Storage</em> del dashboard, vuelve a correr <code>supabase/schema.sql</code>.
+    </p>
+
+    <h2 id="paso9"><span class="badge">Paso 9</span>Desplegar en Vercel</h2>
+    <pre><code>vercel deploy          # preview
+vercel deploy --prod   # producción (pide confirmación explícita)</code></pre>
+    <p>
+      Como Supabase se conectó vía Marketplace, las variables de entorno ya están
+      sincronizadas con el proyecto de Vercel para <em>Production</em>, <em>Preview</em> y
+      <em>Development</em> — no hay que copiarlas a mano en el dashboard.
+    </p>
+
+    <h2 id="troubleshooting">Troubleshooting común</h2>
+
+    <details>
+      <summary>Error "self-signed certificate in certificate chain" al correr <code>npm run db:migrate</code></summary>
+      <p>
+        Ocurre porque <code>sslmode=require</code> en la cadena de conexión de Supabase se
+        interpreta como <code>verify-full</code> en versiones recientes de
+        <code>pg-connection-string</code>, y Node no confía en la CA del pooler por
+        defecto. <code>scripts/run-sql.mjs</code> ya lo maneja quitando
+        <code>sslmode</code> de la URL y pasando <code>ssl: {'{'} rejectUnauthorized: false {'}'}</code>
+        explícitamente al cliente — si escribes tu propio script, haz lo mismo. No uses
+        <code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> global: apaga la verificación TLS para
+        <em>todo</em> el proceso, no solo esta conexión.
+      </p>
+    </details>
+
+    <details>
+      <summary>"Ya soy participante" no hace nada / da error al entrar con el código</summary>
+      <p>
+        Casi siempre es el <a href="#paso3">Paso 3</a> sin activar: revisa con el comando de
+        esa sección. Si ya está activo y el error es
+        <code>"Ese código de equipo no existe o ya no está activo"</code>, confirma que el
+        código se creó desde <em>Códigos de equipo</em> en el panel de facilitador y que
+        sigue <strong>Activo</strong> (no desactivado).
+      </p>
+    </details>
+
+    <details>
+      <summary>Un participante no puede unirse: "Ese apodo ya está en uso en este equipo"</summary>
+      <p>
+        El apodo es único <strong>por equipo</strong> (no globalmente) — dos equipos
+        distintos sí pueden reusar el mismo apodo. Si el error aparece con un apodo que
+        parece nuevo, revisa mayúsculas/tildes: la comparación ignora mayúsculas pero no
+        acentos (<code>José</code> y <code>jose</code> chocan; <code>José</code> y
+        <code>Jose</code> no). Nota: si un participante pierde su sesión (borra cookies,
+        cambia de dispositivo) no hay forma de "recuperar" su progreso con el mismo
+        apodo — debe entrar con un apodo distinto (queda como limitación conocida v1).
+      </p>
+    </details>
+
+    <details>
+      <summary>El facilitador no ve ningún participante</summary>
+      <p>
+        Revisa la <code>comuna_id</code> de su fila en <code>public.facilitadores</code>:
+        si apunta a una comuna sin participantes, la tabla estará vacía (RLS está
+        funcionando correctamente, no es un bug). Usa <code>comuna_id = null</code> para
+        un facilitador con acceso a todas las comunas.
+      </p>
+    </details>
+
+    <details>
+      <summary>"Sin datos suficientes (mínimo 5 respuestas por comuna)" en Análisis grupal</summary>
+      <p>
+        Es la regla de k-anonimato funcionando: por diseño, ningún agregado se muestra si
+        menos de 5 personas de una comuna respondieron ese ítem. No es un error — espera
+        a tener más respuestas o revisa <code>public.v_group_analysis_closed()</code> /
+        <code>v_group_analysis_texto()</code> en <code>supabase/schema.sql</code> si
+        necesitas ajustar el umbral.
+      </p>
+    </details>
+
+    <details>
+      <summary>Quiero cambiar el umbral de k-anonimato (o el algoritmo de categorización de texto libre)</summary>
+      <p>
+        El umbral (5) está en las funciones <code>v_group_analysis_closed()</code> y
+        <code>v_group_analysis_texto()</code> en <code>supabase/schema.sql</code>
+        (<code>where total_comuna &gt;= 5</code>). El clasificador de texto libre por
+        palabras clave está en <code>src/lib/categorize.ts</code> — es intencionalmente
+        simple (reglas por palabra clave, no IA) para mantener el stack a solo
+        Next.js + Supabase.
+      </p>
+    </details>
+
+    <details>
+      <summary>Necesito borrar datos de prueba antes de lanzar de verdad</summary>
+      <p>
+        Los participantes son usuarios anónimos de Supabase Auth
+        (<code>is_anonymous = true</code>, sin email). Para borrar todos: listarlos con
+        <code>supabase.auth.admin.listUsers()</code> filtrando por
+        <code>user.is_anonymous</code> y borrar con
+        <code>supabase.auth.admin.deleteUser(id)</code> — el borrado en cascada limpia
+        automáticamente <code>public.users</code> y <code>public.responses</code>
+        (foreign keys con <code>on delete cascade</code>). Los equipos
+        (<code>public.equipos</code>) no se borran solos: bórralos aparte o desactívalos
+        (<code>activo = false</code>) desde el panel.
+      </p>
+    </details>
+
+    <footer>
+      El Taller de los Sueños — documentación de infraestructura. Generado junto con la
+      implementación de la app (Next.js App Router + Supabase).
+    </footer>
+  </main>
+</div>
+</body>
+</html>

@@ -1,26 +1,618 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Space theme — deep cosmos with violet/coral accents. */
+  color-scheme: dark;
+
+  /* Ground */
+  --background: #090a0f;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-raised: rgba(255, 255, 255, 0.08);
+  --foreground: #f4f0ff;
+  --muted: #a99fc2;
+  --border: rgba(255, 255, 255, 0.12);
+
+  /* Brand: violet (primary) + warm coral (secondary accent, used sparingly) */
+  --brand: #a78bfa;
+  --brand-dark: #c4b5fd;
+  --brand-light: rgba(167, 139, 250, 0.18);
+  --coral: #ff9066;
+  --coral-dark: #ffb494;
+  --coral-light: rgba(255, 144, 102, 0.18);
+
+  /* Semantic (separate from brand accent) */
+  --success: #6ee7b7;
+  --success-light: rgba(110, 231, 183, 0.15);
+  --warning: #fbbf24;
+  --warning-light: rgba(251, 191, 36, 0.15);
+
+  /* Elevation — glowing shadows for dark theme */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(167, 139, 250, 0.08);
+  --shadow-md: 0 4px 20px -4px rgba(0, 0, 0, 0.5), 0 2px 8px -2px rgba(167, 139, 250, 0.15);
+  --shadow-lg: 0 20px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px -12px rgba(167, 139, 250, 0.4);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-base: 260ms;
+  --dur-slow: 420ms;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
+  --color-coral: var(--coral);
+  --color-coral-dark: var(--coral-dark);
+  --color-coral-light: var(--coral-light);
+  --color-accent: var(--success);
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+button {
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+a {
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(30px, -50px, 0) scale(1.1); }
+  66% { transform: translate3d(-20px, 20px, 0) scale(0.95); }
+}
+
+@keyframes blob-float-slow {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate3d(-40px, 30px, 0) scale(1.15) rotate(180deg); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float-3d {
+  0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+  50% { transform: translateY(-12px) rotateX(8deg) rotateY(-8deg); }
+}
+
+@keyframes shine-sweep {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(250%) skewX(-20deg); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  70% { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes drift-slow {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(6px, -8px) rotate(3deg); }
+  50% { transform: translate(-4px, -12px) rotate(-2deg); }
+  75% { transform: translate(-8px, 4px) rotate(4deg); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes grid-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
+.animate-blob { animation: blob-float 18s var(--ease-in-out) infinite; }
+.animate-blob-slow { animation: blob-float-slow 26s var(--ease-in-out) infinite; }
+.animate-float-3d { animation: float-3d 6s var(--ease-in-out) infinite; }
+.animate-drift { animation: drift-slow 12s var(--ease-in-out) infinite; }
+
+.glass {
+  background: rgba(30, 20, 45, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(167, 139, 250, 0.18);
+}
+
+.shine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: translateX(-150%) skewX(-20deg);
+  pointer-events: none;
+}
+.shine:hover::before {
+  animation: shine-sweep 900ms var(--ease-out);
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(167, 139, 250, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 139, 250, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: grid-drift 30s linear infinite;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 80%);
+}
+
+.noise-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  mix-blend-mode: screen;
+}
+
+/* Space stars — 3 parallax layers, tiny/small/medium */
+@keyframes anim-star {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2000px); }
+}
+
+.stars-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  background: transparent;
+}
+.stars-layer::after {
+  content: "";
+  position: absolute;
+  top: 2000px;
+  width: inherit;
+  height: inherit;
+  background: transparent;
+  box-shadow: inherit;
+}
+.stars-1 { animation: anim-star 50s linear infinite; }
+.stars-2 { width: 2px; height: 2px; animation: anim-star 100s linear infinite; }
+.stars-3 { width: 3px; height: 3px; animation: anim-star 150s linear infinite; }
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.35; }
+}
+.stars-2 { animation: anim-star 100s linear infinite, twinkle 4s ease-in-out infinite; }
+.stars-3 { animation: anim-star 150s linear infinite, twinkle 6s ease-in-out infinite; }
+
+@keyframes shooting-star {
+  0% { transform: translate3d(0, 0, 0) rotate(-25deg); opacity: 0; }
+  10% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate3d(-800px, 400px, 0) rotate(-25deg); opacity: 0; }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(var(--orbit-r, 90px)) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(var(--orbit-r, 90px)) rotate(-360deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes tilt-3d {
+  0%, 100% { transform: rotateX(20deg) rotateY(0deg) rotateZ(0deg); }
+  50% { transform: rotateX(20deg) rotateY(180deg) rotateZ(3deg); }
+}
+
+@keyframes aurora-wave {
+  0%, 100% { transform: translateX(-15%) skewX(-10deg); }
+  50% { transform: translateX(15%) skewX(10deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 10px 30px -8px rgba(167,139,250,0.6), 0 0 40px -8px rgba(167,139,250,0.4);
+  }
+  50% {
+    box-shadow: 0 14px 40px -8px rgba(167,139,250,0.85), 0 0 70px -8px rgba(167,139,250,0.7);
+  }
+}
+
+@keyframes letter-rise {
+  0% { opacity: 0; transform: translateY(24px); filter: blur(6px); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes rocket-fly {
+  0% { transform: translate3d(-10vw, 30vh, 0) rotate(35deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translate3d(110vw, -20vh, 0) rotate(35deg); opacity: 0; }
+}
+
+@keyframes glow-breath {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.08); }
+}
+
+.animate-orbit { animation: orbit 12s linear infinite; }
+.animate-spin-slow { animation: spin-slow 20s linear infinite; }
+.animate-tilt-3d { animation: tilt-3d 14s var(--ease-in-out) infinite; }
+.animate-pulse-glow { animation: pulse-glow 3.2s var(--ease-in-out) infinite; }
+.animate-glow-breath { animation: glow-breath 4s var(--ease-in-out) infinite; }
+
+.letter-rise-char {
+  display: inline-block;
+  animation: letter-rise 0.7s var(--ease-out) both;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity, filter;
+}
+
+/* Moon + orbiting rocket loader */
+.moon-loader {
+  display: flex;
+  height: 370px;
+  width: 370px;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  flex-direction: column;
+}
+.moon-loader .moon {
+  background-color: #39beff;
+  height: 170px;
+  width: 170px;
+  border-radius: 50%;
+  position: absolute;
+  margin: auto;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  animation: moon-bob 4s ease-in-out infinite, moon-glow 3.2s ease-in-out infinite;
+}
+
+@keyframes moon-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+@keyframes moon-glow {
+  0%, 100% { box-shadow: 0 0 40px -8px rgba(57,190,255,0.5), 0 0 80px -12px rgba(57,190,255,0.25); }
+  50% { box-shadow: 0 0 60px -6px rgba(57,190,255,0.85), 0 0 120px -10px rgba(57,190,255,0.55); }
+}
+
+/* Blink both eyes together */
+.moon-loader .eye {
+  animation: moon-blink 4.5s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes moon-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+
+/* Mouth breathes a bit */
+.moon-loader .mouth {
+  animation: moon-smile 3s ease-in-out infinite;
+  transform-origin: center top;
+}
+@keyframes moon-smile {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.15) scaleY(1.1); }
+}
+
+/* Blushes fade in/out */
+.moon-loader .blush {
+  animation: moon-blush 2.5s ease-in-out infinite;
+}
+@keyframes moon-blush {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.moon-loader .crater {
+  background-color: #31b4ff;
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  position: relative;
+}
+.moon-loader .crater::before {
+  content: "";
+  position: absolute;
+  height: 25px;
+  width: 25px;
+  border-radius: 50%;
+  box-shadow: -5px 0 0 2px #1ca4f9;
+  top: 2px;
+  left: 7px;
+}
+.moon-loader .crater1 { top: 27px; left: 90px; transform: scale(0.9); }
+.moon-loader .crater2 { bottom: 15px; left: 61px; transform: scale(0.6); }
+.moon-loader .crater3 { left: 15px; transform: scale(0.75); }
+.moon-loader .crater4 { left: 107px; top: 32px; transform: scale(1.18); }
+.moon-loader .crater5 { left: 33px; bottom: 4px; transform: scale(0.65); }
+
+.moon-loader .shadow {
+  height: 190px;
+  width: 190px;
+  box-shadow: 21px 0 0 5px rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  position: relative;
+  bottom: 157.5px;
+  right: 46px;
+}
+.moon-loader .eye {
+  background-color: #161616;
+  height: 12px;
+  width: 12px;
+  position: relative;
+  border-radius: 50%;
+}
+.moon-loader .eye-l { bottom: 255px; left: 59px; }
+.moon-loader .eye-r { bottom: 267px; left: 101px; }
+.moon-loader .mouth {
+  height: 5px;
+  width: 10px;
+  border: 3px solid #161616;
+  position: relative;
+  bottom: 262px;
+  left: 79px;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+}
+.moon-loader .blush {
+  background-color: #1ca4f9;
+  height: 7.5px;
+  width: 7.5px;
+  position: relative;
+  border-radius: 50%;
+}
+.moon-loader .blush1 { bottom: 273px; left: 50px; }
+.moon-loader .blush2 { bottom: 281px; left: 115px; }
+
+.moon-loader .orbit {
+  height: 280px;
+  width: 280px;
+  border-radius: 50%;
+  position: absolute;
+  margin: auto;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  animation: moon-loader-spin 10s infinite linear;
+}
+@keyframes moon-loader-spin { to { transform: rotate(360deg); } }
+
+.moon-loader .rocket {
+  background-color: #fafcf7;
+  height: 50px;
+  width: 25px;
+  border-radius: 50% 50% 0 0;
+  position: relative;
+  left: -11px;
+  top: 112px;
+  overflow: visible;
+}
+.moon-loader .rocket::before {
+  content: "";
+  position: absolute;
+  background-color: #39beff;
+  height: 20px;
+  width: 55px;
+  border-radius: 50% 50% 0 0;
+  z-index: -1;
+  right: -15px;
+  bottom: 0;
+}
+.moon-loader .rocket::after {
+  content: "";
+  position: absolute;
+  background-color: #39beff;
+  height: 4px;
+  width: 15px;
+  border-radius: 0 0 2px 2px;
+  bottom: -4px;
+  left: 4.3px;
+}
+.moon-loader .rocket .fire {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 30px;
+  background: radial-gradient(
+    ellipse at center,
+    #ffec85 0%, #ffae34 40%, #ec760c 70%, #cd4606 90%, rgba(0, 0, 0, 0) 100%
+  );
+  border-radius: 50%;
+  animation: moon-loader-flame 0.3s infinite alternate;
+  z-index: -1;
+}
+@keyframes moon-loader-flame {
+  0% { transform: translateX(-50%) scaleY(1); opacity: 0.9; }
+  100% { transform: translateX(-50%) scaleY(1.4); opacity: 0.5; }
+}
+.moon-loader .rocket .gas {
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: rgba(200, 200, 200, 0.6);
+  border-radius: 50%;
+  animation: moon-loader-gas 1.5s infinite ease-out;
+}
+.moon-loader .rocket .gas:nth-child(3) { animation-delay: 0.3s; left: 40%; }
+.moon-loader .rocket .gas:nth-child(4) { animation-delay: 0.6s; left: 60%; }
+@keyframes moon-loader-gas {
+  0% { transform: translateX(-50%) scale(0.5); opacity: 0.8; }
+  100% { transform: translateX(-50%) translateY(40px) scale(1.8); opacity: 0; }
+}
+.moon-loader .window {
+  background-color: #151845;
+  height: 10px;
+  width: 10px;
+  border: 2px solid #b8d2ec;
+  border-radius: 50%;
+  position: relative;
+  top: 17px;
+  left: 5px;
+}
+.moon-loader .curve {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  animation: moon-loader-rotate 10s linear infinite;
+  fill: transparent;
+}
+@keyframes moon-loader-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.moon-loader .curve text {
+  letter-spacing: 20px;
+  text-transform: uppercase;
+  font: 1.5em "Fira Sans", sans-serif;
+  fill: #95d5ff;
+  filter: drop-shadow(0 2px 8px rgb(21, 117, 207));
+}
+
+/* Solar system — sun with orbiting planets */
+.solar {
+  height: 50px;
+  width: 50px;
+  background: orange;
+  border-radius: 25px;
+  position: relative;
+  animation: solar-glow 1.5s linear infinite;
+}
+.solar i {
+  border-radius: 250px;
+  display: block;
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
+  transform-origin: 50% 50%;
+}
+.solar i::before {
+  content: "";
+  border-radius: 25px;
+  background: black;
+  display: block;
+  position: absolute;
+  top: -5px;
+  right: 45%;
+}
+.solar i.mercury { width: 80px; height: 80px; margin-left: -40px; left: 50%; top: 50%; margin-top: -40px; animation: solar-orbit 3s linear infinite; }
+.solar i.mercury::before { background: #6f5f5f; height: 7px; width: 7px; }
+.solar i.venus { width: 110px; height: 110px; margin-left: -55px; left: 50%; top: 50%; margin-top: -55px; animation: solar-orbit 5s linear infinite; }
+.solar i.venus::before { background: #e7a71f; height: 10px; width: 10px; }
+.solar i.earth { width: 140px; height: 140px; margin-left: -70px; left: 50%; top: 50%; margin-top: -70px; animation: solar-orbit 7s linear infinite; }
+.solar i.earth::before { background: #63bee2; height: 10px; width: 10px; }
+.solar i.mars { width: 170px; height: 170px; margin-left: -85px; left: 50%; top: 50%; margin-top: -85px; animation: solar-orbit 9s linear infinite; }
+.solar i.mars::before { background: red; height: 10px; width: 10px; }
+.solar i.belt {
+  border-width: 25px;
+  width: 240px; height: 240px; margin-left: -120px;
+  border-color: rgba(36, 35, 35, 0.21);
+  left: 50%; top: 50%; margin-top: -120px;
+}
+.solar i.jupiter { width: 260px; height: 260px; margin-left: -130px; left: 50%; top: 50%; margin-top: -130px; animation: solar-orbit 12s linear infinite; }
+.solar i.jupiter::before { background: #cf9b2b; top: -15px; height: 30px; width: 30px; }
+.solar i.saturn { width: 320px; height: 320px; margin-left: -160px; left: 50%; top: 50%; margin-top: -160px; animation: solar-orbit 16s linear infinite; }
+.solar i.saturn::before { background: #cf7a2b; top: -10px; height: 20px; width: 20px; }
+.solar i.saturn::after {
+  content: "";
+  position: absolute;
+  display: block;
+  background: #fff;
+  width: 30px;
+  height: 1px;
+  right: 43.5%;
+  transform: rotate(20deg);
+}
+.solar i.uranus { width: 360px; height: 360px; margin-left: -180px; left: 50%; top: 50%; margin-top: -180px; animation: solar-orbit 20s linear infinite; }
+.solar i.uranus::before { background: #10c593; top: -8px; height: 15px; width: 15px; }
+.solar i.neptune { width: 400px; height: 400px; margin-left: -200px; left: 50%; top: 50%; margin-top: -200px; animation: solar-orbit 24s linear infinite; }
+.solar i.neptune::before { background: #1470e4; top: -8px; height: 15px; width: 15px; }
+
+@keyframes solar-orbit {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+@keyframes solar-glow {
+  0%, 100% { box-shadow: 0 0 20px 4px rgba(255, 165, 0, 0.4); background: orange; }
+  50%      { box-shadow: 0 0 40px 10px rgba(255, 235, 0, 0.7); background: #ffeb00; }
+}
+.shooting-star {
+  position: absolute;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fff, #a78bfa, transparent);
+  border-radius: 999px;
+  filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.9));
+  animation: shooting-star 5s ease-out infinite;
+  opacity: 0;
+}
+
+.perspective-scene {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Kill big/parallax movement, keep small decorative loops (loader, twinkles). */
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+  }
+  .animate-fade-in-up,
+  .letter-rise-char,
+  .animate-blob,
+  .animate-blob-slow,
+  .animate-drift,
+  .animate-float-3d {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

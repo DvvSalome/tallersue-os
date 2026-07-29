@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>El Taller de los Sueños — Migración de demo a Supabase</title>
+<style>
+  :root {
+    --brand: #7c3aed;
+    --brand-dark: #5b21b6;
+    --bg: #faf8fc;
+    --fg: #241f2e;
+    --muted: #6b6478;
+    --card: #ffffff;
+    --border: #e7e2f0;
+    --code-bg: #1e1b29;
+    --code-fg: #f2eefb;
+    --ok: #059669;
+    --warn: #b45309;
+    --danger: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16121d;
+      --fg: #f2eefb;
+      --card: #201a2c;
+      --border: #362d47;
+      --muted: #b3a9c4;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --danger: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+  }
+  .layout { display: flex; max-width: 1100px; margin: 0 auto; }
+  nav {
+    position: sticky; top: 0; align-self: flex-start; width: 250px; flex-shrink: 0;
+    padding: 32px 16px; max-height: 100vh; overflow-y: auto;
+  }
+  nav a {
+    display: block; padding: 6px 10px; color: var(--muted);
+    text-decoration: none; font-size: 14px; border-radius: 8px;
+  }
+  nav a:hover { background: var(--card); color: var(--brand); }
+  nav .navtitle {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); padding: 0 10px; margin: 18px 0 6px;
+  }
+  main { flex: 1; min-width: 0; padding: 32px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
+  h2 {
+    font-size: 22px; margin: 44px 0 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 17px; margin: 28px 0 8px; }
+  p, li { font-size: 15px; }
+  .lead { color: var(--muted); font-size: 16px; margin: 0 0 4px; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13.5px; background: rgba(124,58,237,.1);
+    padding: .15em .4em; border-radius: 5px;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-fg); padding: 16px 18px;
+    border-radius: 12px; overflow-x: auto; font-size: 13px; line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 20px; margin: 16px 0;
+  }
+  .note, .warn, .danger, .ok {
+    border-left: 3px solid var(--brand); background: var(--card);
+    border-radius: 0 12px 12px 0; padding: 14px 18px; margin: 16px 0;
+  }
+  .warn { border-left-color: var(--warn); }
+  .danger { border-left-color: var(--danger); }
+  .ok { border-left-color: var(--ok); }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 2px 8px; border-radius: 999px; vertical-align: middle;
+  }
+  .tag-new { background: rgba(5,150,105,.15); color: var(--ok); }
+  .tag-mod { background: rgba(180,83,9,.15); color: var(--warn); }
+  .tag-keep { background: rgba(107,100,120,.18); color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps > li { counter-increment: step; position: relative; padding-left: 42px; margin-bottom: 28px; }
+  .steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: -2px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    display: grid; place-items: center; font-size: 14px; font-weight: 700;
+  }
+  .check { list-style: none; padding: 0; }
+  .check li { padding-left: 26px; position: relative; margin-bottom: 8px; }
+  .check li::before {
+    content: "☐"; position: absolute; left: 0; color: var(--brand); font-size: 16px;
+  }
+  @media (max-width: 900px) {
+    nav { display: none; }
+    main { padding: 24px 18px 72px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="navtitle">Antes de empezar</div>
+  <a href="#que-pasa">Qué se migra y qué no</a>
+  <a href="#precondiciones">Precondiciones</a>
+  <div class="navtitle">Migración</div>
+  <a href="#cambios">Qué cambia en la base</a>
+  <a href="#comuna">El rol de la comuna</a>
+  <a href="#pasos">Los 6 pasos</a>
+  <div class="navtitle">Después</div>
+  <a href="#verificacion">Verificación</a>
+  <a href="#rollback">Rollback</a>
+  <a href="#trampas">Trampas conocidas</a>
+</nav>
+
+<main>
+<h1>Migración de demo a Supabase</h1>
+<p class="lead">
+  Pasar el Taller de los Sueños del modo demo (todo en <code>localStorage</code>)
+  a Supabase real, con el instrumento v2 de 20 preguntas.
+</p>
+<p class="lead">
+  Complemento de <strong>SUPABASE_SETUP.html</strong>, que cubre la creación del
+  proyecto. Este documento asume que el proyecto ya existe y se enfoca en las
+  migraciones del esquema.
+</p>
+
+<h2 id="que-pasa">Qué se migra y qué no</h2>
+
+<div class="danger">
+  <strong>Los datos de demo no se migran, y no deberían.</strong> Son ficticios:
+  los genera <code>src/lib/demo/seed.ts</code> con una semilla fija y viven en el
+  <code>localStorage</code> del navegador. No hay ninguna ruta de importación
+  hacia Supabase, a propósito. Al apagar el modo demo simplemente dejan de
+  leerse; para borrarlos del navegador hay un botón en <code>/demo</code>.
+</div>
+
+<div class="card">
+  <table>
+    <tr><th>Qué</th><th>Dónde vive hoy</th><th>Al migrar</th></tr>
+    <tr><td>Participantes y respuestas de demo</td><td><code>localStorage</code></td><td>Se descartan</td></tr>
+    <tr><td>Catálogo de las 20 preguntas</td><td><code>src/lib/items.ts</code></td><td>Se replica en <code>item_catalog</code> vía <code>seed.sql</code></td></tr>
+    <tr><td>Las 16 comunas</td><td><code>src/lib/comunas.ts</code></td><td>Ya en <code>seed.sql</code></td></tr>
+    <tr><td>Líneas de atención</td><td><code>seed.sql</code> (ejemplos)</td><td>Reemplazar por las reales</td></tr>
+    <tr><td>Respuestas v1 (14 ítems), si existieran</td><td>Supabase</td><td>Se conservan intactas como histórico</td></tr>
+  </table>
+</div>
+
+<h2 id="precondiciones">Precondiciones</h2>
+<ul>
+  <li>Proyecto de Supabase creado (ver <strong>SUPABASE_SETUP.html</strong>).</li>
+  <li><code>.env.local</code> con <code>POSTGRES_URL_NON_POOLING</code>,
+      <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>
+      y <code>SUPABASE_SERVICE_ROLE_KEY</code>.</li>
+  <li>Node 20 o superior y <code>npm install</code> ya corrido.</li>
+</ul>
+<p>
+  El script de migración lee <code>POSTGRES_URL_NON_POOLING</code> (la conexión
+  directa, no el pooler): las sentencias DDL y los bloques <code>DO</code> no
+  funcionan de forma confiable a través del pooler en modo transacción.
+</p>
+
+<h2 id="cambios">Qué cambia en la base</h2>
+<p>
+  La idea que gobierna todo el cambio: <strong>el instrumento está
+  versionado</strong>. Publicar preguntas nuevas es insertar una versión nueva,
+  nunca reinterpretar filas ya escritas. Por eso ninguna migración toca datos
+  existentes.
+</p>
+
+<h3><span class="tag tag-mod">modificada</span> <code>item_catalog</code></h3>
+<ul>
+  <li>Nueva columna <code>version smallint not null default 1</code>.</li>
+  <li>Nueva columna <code>dimension text</code> — una de las seis dimensiones.</li>
+  <li>La llave primaria pasa de <code>(bloque, item)</code> a <code>(version, bloque, item)</code>.</li>
+</ul>
+
+<h3><span class="tag tag-mod">modificada</span> <code>responses</code></h3>
+<ul>
+  <li>Nueva columna <code>version smallint not null default 1</code>. Las filas
+      que ya existen quedan en la versión 1 — que es lo correcto: respondieron el
+      instrumento viejo. El <em>default</em> pasa a 2 para lo nuevo.</li>
+  <li>La unicidad pasa de <code>(user_id, bloque, item)</code> a
+      <code>(user_id, version, bloque, item)</code>.</li>
+  <li><code>categoria_codificada</code> queda solo para el histórico v1: desde la
+      v2 el texto y su categoría viven en la tabla nueva.</li>
+</ul>
+
+<div class="warn">
+  <strong>Por qué esa unicidad importa.</strong> Si la restricción vieja
+  sobreviviera, alguien que ya respondió el ítem 1 de la v1 no podría responder
+  el ítem 1 de la v2: el <code>upsert</code> lo tomaría como la misma fila. La
+  migración la elimina <strong>por definición de columnas y no por nombre</strong>
+  (con un bloque <code>DO</code> que consulta <code>pg_constraint</code>), porque
+  el nombre autogenerado puede variar entre instalaciones.
+</div>
+
+<h3><span class="tag tag-new">nueva</span> <code>respuestas_abiertas</code></h3>
+<p>
+  El repositorio independiente de texto libre que pide el documento técnico
+  (§2 y §5). Guarda dos cosas: los campos de observaciones de las preguntas
+  cerradas y las preguntas abiertas puras (P20), estas últimas
+  <strong>sin duplicarse</strong> en <code>responses</code>.
+</p>
+<pre><code>respuestas_abiertas (
+  id, user_id, version, bloque, item, clave,
+  texto, categoria_codificada, created_at, updated_at
+)
+unique (user_id, version, clave)</code></pre>
+<p>
+  Con sus tres índices, su trigger de <code>updated_at</code> y cuatro políticas
+  de RLS que replican exactamente las de <code>responses</code>: el participante
+  lee y escribe solo lo propio; el facilitador lee lo de su comuna.
+</p>
+
+<h3><span class="tag tag-new">nueva</span> <code>instrumento_version_actual()</code></h3>
+<p>
+  Devuelve <code>max(version)</code> de <code>item_catalog</code>. Las vistas la
+  usan para no llevar el número de versión escrito a mano.
+</p>
+
+<h3><span class="tag tag-mod">recreadas</span> vistas y funciones de análisis</h3>
+<table>
+  <tr><th>Objeto</th><th>Qué cambia</th></tr>
+  <tr>
+    <td><code>v_participant_progress</code></td>
+    <td>Contaba <code>= 14</code> ítems fijos. Ahora deriva el total del catálogo
+        y suma <strong>dos fuentes</strong>: cerradas más abiertas puras. Los
+        campos de observaciones no cuentan para la completitud porque son
+        opcionales.</td>
+  </tr>
+  <tr>
+    <td><code>v_group_analysis_closed()</code></td>
+    <td>Se le agrega el filtro por versión. Misma firma, se reemplaza con
+        <code>create or replace</code>.</td>
+  </tr>
+  <tr>
+    <td><code>v_group_analysis_texto()</code></td>
+    <td>Ahora lee de <code>respuestas_abiertas</code> y devuelve una columna
+        <code>clave</code> nueva. <strong>Cambió el tipo de retorno</strong>, así
+        que la migración hace <code>drop function</code> antes de recrearla:
+        Postgres no permite reemplazar una función cuyo resultado cambia.</td>
+  </tr>
+</table>
+
+<div class="ok">
+  <strong>Lo que no cambia:</strong> el k-anonimato. Ningún agregado se publica
+  para una comuna con menos de 5 respuestas distintas, y del texto libre solo
+  sale la categoría codificada. Ya estaba así y se mantiene en las dos
+  funciones.
+</div>
+
+<h2 id="comuna">El rol de la comuna</h2>
+<p>
+  Hay <strong>dos comunas</strong> en el modelo y conviene no confundirlas,
+  porque la migración cambia cuál gobierna qué.
+</p>
+<table>
+  <tr><th>Campo</th><th>Quién lo pone</th><th>Para qué sirve</th></tr>
+  <tr>
+    <td><code>users.comuna_id</code></td>
+    <td>El participante, al entrar</td>
+    <td><strong>Solo</strong> para filtrar <code>lineas_atencion</code> y mostrarle
+        puntos de apoyo cerca de donde vive.</td>
+  </tr>
+  <tr>
+    <td><code>equipos.comuna_id</code></td>
+    <td>El facilitador, al crear el código</td>
+    <td>Unidad territorial del taller: define el alcance del facilitador y el eje
+        de los agregados del mapa colectivo.</td>
+  </tr>
+</table>
+<div class="warn">
+  <strong>Esto cambió con la migración.</strong> Antes la comuna del participante
+  se heredaba del equipo y gobernaba las políticas de RLS y el análisis grupal.
+  Ahora la elige la persona y no interviene en el taller. Las cuatro políticas
+  de facilitador (<code>users</code>, <code>responses</code>,
+  <code>respuestas_abiertas</code> y el bucket de storage) y las tres
+  vistas/funciones de análisis pasaron a resolver la comuna
+  <strong>a través del equipo</strong>.
+</div>
+<p>
+  Si no se hiciera ese cambio aparecería un error concreto: un joven que asiste
+  al taller de la Comuna 1 pero vive en Manrique <em>desaparecería</em> de la
+  lista de su propio facilitador. Por eso el alcance va por equipo.
+</p>
+
+<h2 id="pasos">Los 6 pasos</h2>
+<ol class="steps">
+
+<li>
+<h3>Aplicar esquema y catálogo</h3>
+<pre><code>npm run db:migrate</code></pre>
+<p>
+  Corre <code>supabase/schema.sql</code> y luego <code>supabase/seed.sql</code>.
+  Es re-ejecutable: usa <code>if not exists</code> / <code>or replace</code>, y
+  las políticas de RLS se borran y recrean por nombre en cada corrida.
+</p>
+<p>
+  Cada archivo se envía como un solo lote, así que corre dentro de una
+  transacción implícita: si una sentencia falla, <strong>no queda nada a
+  medias</strong>.
+</p>
+<p>Si prefieres el SQL Editor del dashboard, pega primero el contenido completo
+  de <code>schema.sql</code>, ejecútalo, y luego <code>seed.sql</code>.</p>
+</li>
+
+<li>
+<h3>Verificar que el catálogo del código y el de la base coincidan</h3>
+<pre><code>npm run verify:catalog</code></pre>
+<p>
+  Compara <code>src/lib/items.ts</code> contra <code>supabase/seed.sql</code>
+  pregunta por pregunta: número, clave, tipo, bloque y dimensión. Debe reportar
+  <em>20 preguntas, 5 bloques, 17 campos de texto, versión 2</em>. Si algo no
+  cuadra, no sigas: el formulario y el análisis quedarían describiendo
+  instrumentos distintos.
+</p>
+</li>
+
+<li>
+<h3>Activar el login anónimo</h3>
+<p>
+  En el dashboard de Supabase: <strong>Authentication → Providers → Anonymous
+  sign-ins → habilitar</strong>. Es <strong>obligatorio</strong>: los
+  participantes entran con código de equipo, sin cuenta ni contraseña, y la
+  sesión se crea con <code>signInAnonymously()</code>.
+</p>
+<div class="warn">
+  Esto no se puede activar por SQL. Si se olvida, "Ya soy participante" falla
+  con un error de autenticación y el formulario nunca carga.
+</div>
+</li>
+
+<li>
+<h3>Apagar el modo demo</h3>
+<p>En <code>.env.local</code>:</p>
+<pre><code>NEXT_PUBLIC_DEMO_MODE=false</code></pre>
+<p>
+  Y en Vercel, la misma variable para Production y Preview
+  (<code>vercel env add NEXT_PUBLIC_DEMO_MODE</code> o desde el panel). Es una
+  variable <code>NEXT_PUBLIC_</code>, así que se inyecta en tiempo de build:
+  <strong>hay que volver a desplegar</strong> para que tome efecto.
+</p>
+<p>
+  Con el modo demo apagado, la ruta <code>/demo</code> deja de sembrar y muestra
+  un aviso de que no está disponible. No hace falta borrarla.
+</p>
+</li>
+
+<li>
+<h3>Crear un facilitador</h3>
+<pre><code>npm run facilitador:create -- &lt;codigo&gt; &lt;password&gt; [comuna_id|all] [nombre]
+
+# ejemplos
+npm run facilitador:create -- COMUNA1 "clave-larga-aqui" 1 "Equipo Popular"
+npm run facilitador:create -- COORD "clave-larga-aqui" all "Coordinación general"</code></pre>
+<p>
+  <code>all</code> deja ver todas las comunas; un número la limita a esa comuna.
+  El script usa la <em>service role key</em>, así que se corre localmente y
+  nunca desde el navegador.
+</p>
+</li>
+
+<li>
+<h3>Crear los códigos de equipo</h3>
+<p>
+  Entra como facilitador y ve a <strong>Panel → Equipos</strong>. Los códigos de
+  equipo se crean desde ahí, no por script: son el dato que se le dicta al grupo
+  en el taller. Cada equipo pertenece a una comuna, y el participante hereda esa
+  comuna al unirse.
+</p>
+</li>
+</ol>
+
+<h2 id="verificacion">Verificación</h2>
+
+<h3>En la base</h3>
+<pre><code>-- 1. La versión vigente debe ser 2
+select public.instrumento_version_actual();
+
+-- 2. El catálogo: 14 filas en v1 (si había histórico) y 20 en v2
+select version, count(*) from public.item_catalog group by version order by version;
+
+-- 3. La tabla de texto existe y tiene RLS activo
+select relname, relrowsecurity
+from pg_class where relname = 'respuestas_abiertas';
+
+-- 4. La unicidad correcta en responses (debe incluir "version")
+select indexname, indexdef from pg_indexes
+where tablename = 'responses' and indexdef like '%UNIQUE%';
+
+-- 5. No debe quedar ninguna restricción única vieja sin version
+select con.conname
+from pg_constraint con join pg_class rel on rel.oid = con.conrelid
+where rel.relname = 'responses' and con.contype = 'u';
+
+-- 6. Las políticas nuevas (deben salir 4)
+select policyname from pg_policies
+where tablename = 'respuestas_abiertas' order by policyname;
+
+-- 7. Invariante de la comuna: los agregados deben salir SOLO por comuna de
+--    equipo. Esta consulta debe devolver 0 filas.
+select a.comuna_nombre
+from public.v_group_analysis_closed() a
+where a.comuna_id not in (select comuna_id from public.equipos);</code></pre>
+
+<h3>En la aplicación</h3>
+<ul class="check">
+  <li>Un facilitador puede entrar y crear un código de equipo.</li>
+  <li>Un participante se une con ese código, apodo, edad <strong>y su comuna</strong>.</li>
+  <li>En <code>/home</code> las líneas de atención corresponden a la comuna que eligió.</li>
+  <li>Un participante que elige una comuna distinta a la del equipo <strong>sigue
+      apareciendo</strong> en la lista de su facilitador/a.</li>
+  <li>El formulario muestra <strong>5 bloques</strong> y avanza bloque por bloque.</li>
+  <li>Las escalas 1–5 aparecen con sus anclas (P2, P6, P15).</li>
+  <li>Los campos de observaciones se pueden dejar vacíos y el bloque igual avanza.</li>
+  <li>Al terminar, <code>/resultados</code> muestra la Brújula con los 5 índices,
+      el FODA y máximo 3 recomendaciones.</li>
+  <li>Recargar el formulario recupera lo ya respondido (cerradas y texto).</li>
+  <li>El CSV del participante trae sus respuestas y comentarios.</li>
+  <li>El CSV del facilitador <strong>no</strong> trae apodo, <code>user_id</code>
+      ni texto crudo: solo columnas <code>__categoria</code>.</li>
+</ul>
+
+<div class="note">
+  <strong>El mapa colectivo va a salir vacío al principio, y eso es correcto.</strong>
+  Hasta que una comuna acumule 5 respuestas distintas por pregunta, no se publica
+  ningún agregado. Con un grupo piloto pequeño verás el mensaje "sin datos
+  suficientes" en todas las secciones. No es un error de configuración.
+</div>
+
+<h2 id="rollback">Rollback</h2>
+<p>
+  La migración es aditiva: no borra columnas ni filas. Para volver atrás basta con
+  revertir el código y apagar la lectura de la v2; los datos v1 nunca se tocaron.
+</p>
+<pre><code>-- Volver a la v1 como versión vigente: quitar el catálogo v2.
+-- Las respuestas v2 quedan guardadas pero dejan de leerse.
+delete from public.item_catalog where version = 2;
+
+-- Si además quieres descartar las respuestas del instrumento v2:
+delete from public.responses where version = 2;
+delete from public.respuestas_abiertas where version = 2;</code></pre>
+<div class="warn">
+  Ese <code>delete</code> del catálogo hace que <code>instrumento_version_actual()</code>
+  vuelva a 1 y las vistas empiecen a agregar datos de la v1. La tabla
+  <code>respuestas_abiertas</code> puede quedarse: no le estorba a la v1.
+</div>
+
+<h2 id="trampas">Trampas conocidas</h2>
+
+<div class="card">
+<h3>1. Olvidar el redeploy tras apagar el modo demo</h3>
+<p>
+  <code>NEXT_PUBLIC_DEMO_MODE</code> se resuelve en tiempo de build. Cambiarla en
+  el panel de Vercel sin redesplegar deja la app en modo demo.
+</p>
+</div>
+
+<div class="card">
+<h3>2. Correr las migraciones por el pooler</h3>
+<p>
+  Usa <code>POSTGRES_URL_NON_POOLING</code>. Por el pooler en modo transacción,
+  el bloque <code>DO</code> y algunas sentencias DDL pueden fallar o aplicarse a
+  medias.
+</p>
+</div>
+
+<div class="card">
+<h3>3. Esperar que los datos de demo aparezcan en Supabase</h3>
+<p>
+  No van a aparecer. Son ficticios y viven en el navegador. Si necesitas datos de
+  prueba en la base real, crea un equipo y responde el formulario a mano unas
+  cuantas veces — o pide un sembrador que escriba contra Supabase, que hoy no
+  existe.
+</p>
+</div>
+
+<div class="card">
+<h3>4. Editar preguntas directamente sobre la versión 2</h3>
+<p>
+  Cambiar el texto de una etiqueta es seguro. Cambiar <strong>opciones, tipo o
+  significado</strong> de una pregunta ya respondida no lo es: reinterpreta
+  silenciosamente respuestas viejas. Para eso está el versionado — se publica una
+  v3 en <code>items.ts</code> y en <code>seed.sql</code>, y se sube
+  <code>INSTRUMENTO_VERSION</code>.
+</p>
+</div>
+
+<div class="card">
+<h3>5. El bucket de <code>evidencias</code> queda sin uso</h3>
+<p>
+  <code>schema.sql</code> crea el bucket y sus políticas porque el instrumento v1
+  tenía una pregunta de foto adjunta. El v2 no tiene adjuntos. Es inofensivo y se
+  mantiene para que las evidencias v1 sigan siendo legibles; si nunca hubo datos
+  v1, se puede borrar el bucket sin consecuencias.
+</p>
+</div>
+
+<div class="card">
+<h3>6. Las líneas de atención del seed son de ejemplo</h3>
+<p>
+  Los teléfonos y direcciones de <code>lineas_atencion</code> en
+  <code>seed.sql</code> son de muestra. Es contenido que ve un joven que puede
+  estar buscando ayuda real: hay que reemplazarlo por la información verificada
+  del equipo del Taller antes de abrir a participantes.
+</p>
+</div>
+
+</main>
+</div>
+</body>
+</html>
