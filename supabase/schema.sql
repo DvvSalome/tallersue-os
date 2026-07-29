@@ -274,6 +274,29 @@ create table if not exists public.lineas_atencion (
 
 create index if not exists lineas_atencion_comuna_idx on public.lineas_atencion (comuna_id);
 
+-- Clave natural para que el seed sea REALMENTE idempotente. Sin esto la tabla no
+-- tenía ninguna restricción única, así que el `on conflict do nothing` de
+-- seed.sql nunca encontraba conflicto y cada corrida de db:migrate insertaba las
+-- líneas otra vez: el participante terminaba viendo cada línea de atención
+-- repetida tantas veces como se hubiera migrado.
+-- Se deduplica primero (conservando la fila más antigua de cada nombre+comuna) y
+-- luego se crea el índice único.
+delete from public.lineas_atencion l
+  using public.lineas_atencion k
+ where l.nombre = k.nombre
+   and coalesce(l.comuna_id, -1) = coalesce(k.comuna_id, -1)
+   and l.created_at > k.created_at;
+
+delete from public.lineas_atencion l
+  using public.lineas_atencion k
+ where l.nombre = k.nombre
+   and coalesce(l.comuna_id, -1) = coalesce(k.comuna_id, -1)
+   and l.created_at = k.created_at
+   and l.id > k.id;
+
+create unique index if not exists lineas_atencion_nombre_comuna_unique
+  on public.lineas_atencion (nombre, coalesce(comuna_id, -1));
+
 -- ============================================================================
 -- 7. Helper views for the facilitador dashboard
 -- ============================================================================
