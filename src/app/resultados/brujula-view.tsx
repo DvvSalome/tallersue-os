@@ -287,6 +287,17 @@ export function BrujulaView({
             </p>
           </div>
         )}
+
+        <Link
+          href="/resultados/grupo"
+          className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-brand/30 bg-brand/[0.06] px-4 py-2.5 text-sm font-semibold text-brand-dark transition-colors hover:border-brand hover:bg-brand-light"
+        >
+          Ver Nuestro Mapa de los Sueños
+          <span aria-hidden>→</span>
+        </Link>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted/80">
+          La lectura colectiva y anónima de todo tu grupo: nunca muestra quién respondió qué.
+        </p>
       </Seccion>
 
       {/* ---------------------------------------------- Siguiente movimiento */}

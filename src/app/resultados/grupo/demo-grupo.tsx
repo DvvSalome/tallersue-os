@@ -13,21 +13,18 @@ import { computeGroupAnalysis } from "@/lib/demo/analysis";
 import { INSTRUMENTO_VERSION } from "@/lib/items";
 import { calcularDistribucionPerfiles, type ParticipanteParaPerfil } from "@/lib/perfiles-grupales";
 import type { RespuestasCerradas } from "@/lib/respuestas";
-import { buildFacilitadorCsv } from "@/lib/demo/csv";
-import { DownloadCsvButton } from "@/components/download-csv-button";
-import { FacilitadorNav } from "@/components/facilitador-nav";
-import { AnalisisView } from "./analisis-view";
+import { GrupoParticipanteView } from "./grupo-participante-view";
 
-export function DemoAnalisis() {
+export function DemoGrupo() {
   const router = useRouter();
   const actor = useDemoActor();
 
   useEffect(() => {
-    if (actor === null) router.replace("/facilitador/login");
-    if (actor && actor.kind !== "facilitador") router.replace("/home");
+    if (actor === null) router.replace("/participar");
+    if (actor && actor.kind !== "participante") router.replace("/facilitador/dashboard/analisis");
   }, [actor, router]);
 
-  if (!actor || actor.kind !== "facilitador") return null;
+  if (!actor || actor.kind !== "participante") return null;
 
   const { closed, texto } = computeGroupAnalysis(
     listResponses(),
@@ -53,23 +50,18 @@ export function DemoAnalisis() {
   }));
   const perfilRows = calcularDistribucionPerfiles(participantes);
 
+  // Igual que en producción: el recorte al propio equipo pasa aquí, antes de
+  // llegar a la vista, para que el componente compartido no tenga que saber si
+  // quien lo ve es participante o facilitador.
+  const soloMiEquipo = <T extends { equipo_id: string }>(filas: T[]) =>
+    filas.filter((f) => f.equipo_id === actor.equipoId);
+
   return (
-    <AnalisisView
-      nav={<FacilitadorNav codigoGrupo={actor.codigoGrupo} />}
-      closedRows={closed}
-      textoRows={texto}
-      perfilRows={perfilRows}
-      exportSlot={
-        <DownloadCsvButton
-          generate={() =>
-            buildFacilitadorCsv(listUsers(), listResponses(), listRespuestasAbiertas())
-          }
-          filename="taller-de-los-suenos-anonimizado.csv"
-          className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-all duration-150 enabled:hover:brightness-110 enabled:active:scale-[0.97] disabled:opacity-50"
-        >
-          Exportar CSV anonimizado
-        </DownloadCsvButton>
-      }
+    <GrupoParticipanteView
+      apodo={actor.apodo}
+      closedRows={soloMiEquipo(closed)}
+      textoRows={soloMiEquipo(texto)}
+      perfilRows={soloMiEquipo(perfilRows)}
     />
   );
 }

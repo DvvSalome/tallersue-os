@@ -6,6 +6,7 @@ import type { ClosedRow, TextoRow } from "@/lib/analisis-grupal";
 import { INSTRUMENTO_VERSION } from "@/lib/items";
 import { calcularDistribucionPerfiles, type ParticipanteParaPerfil } from "@/lib/perfiles-grupales";
 import type { RespuestasCerradas, StoredValor } from "@/lib/respuestas";
+import { FacilitadorNav } from "@/components/facilitador-nav";
 import { DemoAnalisis } from "./demo-analisis";
 import { AnalisisView } from "./analisis-view";
 import { ExportCsvButton } from "./export-csv-button";
@@ -55,7 +56,7 @@ export default async function AnalisisGrupalPage() {
 
   return (
     <AnalisisView
-      codigoGrupo={actor.codigoGrupo}
+      nav={<FacilitadorNav codigoGrupo={actor.codigoGrupo} />}
       closedRows={(closed ?? []) as ClosedRow[]}
       textoRows={(texto ?? []) as TextoRow[]}
       perfilRows={perfilRows}

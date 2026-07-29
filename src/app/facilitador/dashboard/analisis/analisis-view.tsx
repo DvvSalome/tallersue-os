@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { optionLabel, type Item } from "@/lib/items";
 import { seccionesResueltas, type SerieResuelta } from "@/lib/mapa-colectivo";
-import { FacilitadorNav } from "@/components/facilitador-nav";
 import { K_ANON_MIN, nombreGrupo, type ClosedRow, type TextoRow } from "@/lib/analisis-grupal";
 import { Dona, Medidor } from "@/components/charts";
 import type { PerfilRow } from "@/lib/perfiles-grupales";
@@ -30,17 +29,24 @@ type Forma = "auto" | "circular" | "barras";
 //    la lectura no depende de distinguir tonos.
 
 export function AnalisisView({
-  codigoGrupo,
+  nav,
   closedRows,
   textoRows,
   perfilRows,
   exportSlot,
 }: {
-  codigoGrupo: string;
+  /** Cabecera de la pantalla: FacilitadorNav para el facilitador, un encabezado
+   *  más simple para el participante. Vive fuera de este componente porque el
+   *  mapa colectivo lo ven los dos roles, pero cada uno necesita una
+   *  navegación distinta (el participante no debe ver enlaces a "Participantes"
+   *  ni a "Códigos de equipo", que sí llevan datos identificables). */
+  nav: React.ReactNode;
   closedRows: ClosedRow[];
   textoRows: TextoRow[];
   perfilRows: PerfilRow[];
-  exportSlot: React.ReactNode;
+  /** Ausente para el participante: la exportación en CSV queda solo para quien
+   *  facilita. */
+  exportSlot?: React.ReactNode;
 }) {
   const secciones = seccionesResueltas();
   const [grupoActivo, setGrupoActivo] = useState("");
@@ -76,7 +82,7 @@ export function AnalisisView({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 pb-24 pt-8">
-      <FacilitadorNav codigoGrupo={codigoGrupo} />
+      {nav}
 
       <header className="animate-fade-in-up flex flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
