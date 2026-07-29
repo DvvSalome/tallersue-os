@@ -42,7 +42,7 @@ export function AnalisisView({
   const secciones = seccionesResueltas();
   const [grupoActivo, setGrupoActivo] = useState("");
   const [seccionActiva, setSeccionActiva] = useState(secciones[0]?.id ?? "");
-  const [forma, setForma] = useState<Forma>("auto");
+  const [forma, setForma] = useState<Forma>("circular");
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, string>();
@@ -52,10 +52,17 @@ export function AnalisisView({
     return [...mapa.entries()].sort((a, b) => a[1].localeCompare(b[1]));
   }, [closedRows, textoRows]);
 
-  const cerradas = grupoActivo
-    ? closedRows.filter((f) => f.equipo_id === grupoActivo)
-    : closedRows;
-  const textos = grupoActivo ? textoRows.filter((f) => f.equipo_id === grupoActivo) : textoRows;
+  // Con "Todos" seleccionado hay una fila POR GRUPO para la misma opción. Si se
+  // pintan tal cual, la misma categoría aparece repetida tantas veces como
+  // grupos la tengan — que es exactamente lo que se veía. Se suman.
+  const cerradas = useMemo(
+    () => (grupoActivo ? closedRows.filter((f) => f.equipo_id === grupoActivo) : unirCerradas(closedRows)),
+    [closedRows, grupoActivo],
+  );
+  const textos = useMemo(
+    () => (grupoActivo ? textoRows.filter((f) => f.equipo_id === grupoActivo) : unirTextos(textoRows)),
+    [textoRows, grupoActivo],
+  );
   const hayDatos = cerradas.length > 0 || textos.length > 0;
   const seccion = secciones.find((s) => s.id === seccionActiva) ?? secciones[0];
 
@@ -101,8 +108,9 @@ export function AnalisisView({
             Barras
           </Pill>
           <span className="w-full text-[11px] leading-relaxed text-muted/70">
-            En automático, las series de hasta {MAX_PORCIONES_ANILLO} categorías se muestran como
-            anillo y las escalas como medidor; con más categorías las barras se comparan mejor.
+            En circulares, las series se muestran como anillo y las escalas como medidor. Cuando
+            hay más de {MAX_PORCIONES_ANILLO} categorías la cola se agrupa para que el anillo siga
+            siendo legible; en barras se ven todas por separado.
           </span>
         </div>
       </header>
@@ -328,17 +336,32 @@ function Serie({
   const ordenadas = serie.forma === "emociones" ? filas : [...filas].sort((a, b) => b.n - a.n);
   const total = filas[0].total;
 
-  const usarAnillo =
-    forma === "circular" || (forma === "auto" && ordenadas.length <= MAX_PORCIONES_ANILLO);
+  const usarAnillo = forma !== "barras";
 
   if (usarAnillo) {
+    // Con demasiadas porciones el anillo deja de comparar nada, así que la cola
+    // se agrupa — pero se dice cuántas categorías quedaron dentro, para no
+    // esconder que hubo un recorte.
+    const visibles = ordenadas.slice(0, MAX_PORCIONES_ANILLO);
+    const cola = ordenadas.slice(MAX_PORCIONES_ANILLO);
+    const porciones = visibles.map((f) => ({ etiqueta: f.etiqueta, n: f.n, pct: f.pct }));
+    if (cola.length > 0) {
+      const nCola = cola.reduce((acc, f) => acc + f.n, 0);
+      porciones.push({
+        etiqueta: `Otras ${cola.length} categorías`,
+        n: nCola,
+        pct: Math.round((1000 * nCola) / total) / 10,
+      });
+    }
     return (
       <Panel titulo={titulo} n={total} nota={serie.nota}>
-        <Dona
-          porciones={ordenadas.map((f) => ({ etiqueta: f.etiqueta, n: f.n, pct: f.pct }))}
-          total={total}
-          etiquetaCentro={`n=${total}`}
-        />
+        <Dona porciones={porciones} total={total} etiquetaCentro={`n=${total}`} />
+        {cola.length > 0 && (
+          <p className="mt-2 text-[11px] leading-relaxed text-muted/70">
+            Se agruparon {cola.length} categorías con menos menciones. Cambia a &ldquo;Barras&rdquo;
+            para verlas una por una.
+          </p>
+        )}
         {serie.esTexto && <NotaTexto />}
       </Panel>
     );
@@ -452,4 +475,82 @@ function etiquetaOpcion(item: Item, value: string) {
     return item.escala ? `${value} de ${item.escala.max}` : value;
   }
   return optionLabel(item, value);
+}
+
+/** Suma las filas de todos los grupos para una misma pregunta y opción. El
+ *  denominador es la suma de los respondientes de cada grupo presente, no una
+ *  media de porcentajes: promediar porcentajes de grupos de distinto tamaño da
+ *  un número que no significa nada. */
+function unirCerradas(filas: ClosedRow[]): ClosedRow[] {
+  const totalPorSerie = totalesPorSerie(filas, (f) => `${f.bloque}:${f.item}`);
+  const acc = new Map<string, ClosedRow>();
+  for (const f of filas) {
+    const k = `${f.bloque}:${f.item}:${f.opcion}`;
+    const previo = acc.get(k);
+    acc.set(k, previo ? { ...previo, n: previo.n + f.n } : { ...f });
+  }
+  const unidas = [...acc.values()];
+  // El promedio de una escala se recalcula ponderando por los conteos sumados:
+  // heredar el promedio del primer grupo daría el número de un solo grupo.
+  const promedioPorSerie = new Map<string, number>();
+  for (const f of unidas) {
+    if (f.tipo !== "likert") continue;
+    const k = `${f.bloque}:${f.item}`;
+    if (promedioPorSerie.has(k)) continue;
+    const serie = unidas.filter((x) => `${x.bloque}:${x.item}` === k);
+    const suma = serie.reduce((acc2, x) => acc2 + Number(x.opcion) * x.n, 0);
+    const cuenta = serie.reduce((acc2, x) => acc2 + x.n, 0);
+    if (cuenta > 0) promedioPorSerie.set(k, Math.round((100 * suma) / cuenta) / 100);
+  }
+
+  return unidas.map((f) => {
+    const total = totalPorSerie.get(`${f.bloque}:${f.item}`) ?? f.total_grupo;
+    return {
+      ...f,
+      equipo_id: "todos",
+      equipo_codigo: "Todos los grupos",
+      equipo_nombre: null,
+      total_grupo: total,
+      porcentaje: Math.round((1000 * f.n) / total) / 10,
+      promedio: promedioPorSerie.get(`${f.bloque}:${f.item}`) ?? f.promedio,
+    };
+  });
+}
+
+function unirTextos(filas: TextoRow[]): TextoRow[] {
+  const totalPorSerie = totalesPorSerie(filas, (f) => f.clave);
+  const acc = new Map<string, TextoRow>();
+  for (const f of filas) {
+    const k = `${f.clave}:${f.categoria_codificada}`;
+    const previo = acc.get(k);
+    acc.set(k, previo ? { ...previo, n: previo.n + f.n } : { ...f });
+  }
+  return [...acc.values()].map((f) => {
+    const total = totalPorSerie.get(f.clave) ?? f.total_grupo;
+    return {
+      ...f,
+      equipo_id: "todos",
+      equipo_codigo: "Todos los grupos",
+      equipo_nombre: null,
+      total_grupo: total,
+      porcentaje: Math.round((1000 * f.n) / total) / 10,
+    };
+  });
+}
+
+/** Respondientes totales de una serie: suma de `total_grupo` una sola vez por
+ *  grupo (las filas lo repiten por cada opción). */
+function totalesPorSerie<T extends { equipo_id: string; total_grupo: number }>(
+  filas: T[],
+  serie: (f: T) => string,
+): Map<string, number> {
+  const vistos = new Set<string>();
+  const totales = new Map<string, number>();
+  for (const f of filas) {
+    const marca = `${serie(f)}::${f.equipo_id}`;
+    if (vistos.has(marca)) continue;
+    vistos.add(marca);
+    totales.set(serie(f), (totales.get(serie(f)) ?? 0) + f.total_grupo);
+  }
+  return totales;
 }
