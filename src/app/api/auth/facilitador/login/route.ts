@@ -5,7 +5,11 @@ import { facilitadorEmail } from "@/lib/auth-identity";
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const codigoGrupo = typeof body?.codigoGrupo === "string" ? body.codigoGrupo.trim() : "";
-  const password = typeof body?.password === "string" ? body.password : "";
+  // Se recortan los espacios de los extremos. Es una credencial compartida que
+  // se dicta en un taller y se copia y pega: un espacio invisible al final
+  // producía "Código de grupo o contraseña incorrectos" sin ninguna pista de por
+  // qué. El código ya se recortaba; la contraseña no, y ahí estaba la trampa.
+  const password = typeof body?.password === "string" ? body.password.trim() : "";
 
   if (!codigoGrupo || !password) {
     return NextResponse.json({ error: "Completa el código de grupo y la contraseña." }, { status: 400 });
