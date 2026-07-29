@@ -11,9 +11,9 @@ Supabase (Postgres, Auth, Storage), desplegado en Vercel.
 ## Setup
 
 Sigue **[SUPABASE_SETUP.html](./SUPABASE_SETUP.html)** para crear el proyecto
-de Supabase, cargar el schema y los datos maestros, activar el login anónimo
-(**obligatorio** para que "Ya soy participante" funcione) y crear cuentas de
-facilitador. Resumen rápido si Supabase ya está provisionado y `.env.local`
+de Supabase, cargar el schema y los datos maestros, y crear cuentas de
+facilitador. Para migrar de demo a Supabase, ver
+**[MIGRACION_DEMO_A_SUPABASE.html](./MIGRACION_DEMO_A_SUPABASE.html)**. Resumen rápido si Supabase ya está provisionado y `.env.local`
 existe:
 
 ```bash
@@ -27,7 +27,8 @@ Abre [http://localhost:3000](http://localhost:3000).
 ## Estructura
 
 - `src/app/participar/` — un participante entra con código de equipo + apodo +
-  edad + su comuna (sin contraseña; sesión = Supabase Anonymous Auth).
+  edad + su comuna (sin contraseña visible: el servidor le crea credenciales sintéticas y abre la
+  sesión, así no hay nada que habilitar a mano en Supabase).
 - `src/app/home/`, `formulario/`, `resultados/` — flujo del participante
   (líneas de atención, las 20 preguntas y su Brújula personal).
 - `src/app/facilitador/` — login con contraseña + dashboard (participantes,

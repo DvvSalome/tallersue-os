@@ -122,7 +122,7 @@
   <div class="navtitle">Migración</div>
   <a href="#cambios">Qué cambia en la base</a>
   <a href="#comuna">El rol de la comuna</a>
-  <a href="#pasos">Los 6 pasos</a>
+  <a href="#pasos">Los 5 pasos</a>
   <div class="navtitle">Después</div>
   <a href="#verificacion">Verificación</a>
   <a href="#rollback">Rollback</a>
@@ -301,7 +301,16 @@ unique (user_id, version, clave)</code></pre>
   lista de su propio facilitador. Por eso el alcance va por equipo.
 </p>
 
-<h2 id="pasos">Los 6 pasos</h2>
+<div class="ok">
+  <strong>No hay nada que habilitar a mano en Supabase.</strong> Antes hacía falta
+  activar <em>Anonymous sign-ins</em> en el panel para que los participantes
+  pudieran unirse, y si estaba apagado el ingreso fallaba sin pista clara. Ahora
+  el servidor le crea a cada participante un email sintético con contraseña
+  aleatoria mediante el cliente admin y le abre la sesión: el navegador nunca ve
+  una credencial y la migración es del todo automatizable.
+</div>
+
+<h2 id="pasos">Los 5 pasos</h2>
 <ol class="steps">
 
 <li>
@@ -331,20 +340,6 @@ unique (user_id, version, clave)</code></pre>
   cuadra, no sigas: el formulario y el análisis quedarían describiendo
   instrumentos distintos.
 </p>
-</li>
-
-<li>
-<h3>Activar el login anónimo</h3>
-<p>
-  En el dashboard de Supabase: <strong>Authentication → Providers → Anonymous
-  sign-ins → habilitar</strong>. Es <strong>obligatorio</strong>: los
-  participantes entran con código de equipo, sin cuenta ni contraseña, y la
-  sesión se crea con <code>signInAnonymously()</code>.
-</p>
-<div class="warn">
-  Esto no se puede activar por SQL. Si se olvida, "Ya soy participante" falla
-  con un error de autenticación y el formulario nunca carga.
-</div>
 </li>
 
 <li>

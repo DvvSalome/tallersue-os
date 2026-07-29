@@ -7,10 +7,11 @@
 -- and recreates policies by name.
 --
 -- Participants join with a TEAM CODE (no personal password) — see `equipos`
--- below. Auth is Supabase Anonymous Sign-in (Authentication → Providers →
--- "Allow anonymous sign-ins" must be enabled in the dashboard; this cannot be
--- toggled from SQL). Facilitadores keep password-based login (synthetic
--- email + shared password per group), unaffected by this.
+-- below. Both participants and facilitadores use ordinary password auth with a
+-- SYNTHETIC email minted server-side, so there is NOTHING to enable by hand in
+-- the Supabase dashboard. (Participants used to rely on Anonymous Sign-in,
+-- which had to be toggled in the dashboard and silently broke joining whenever
+-- it was off; see src/lib/auth-identity.ts.)
 -- ============================================================================
 
 create extension if not exists "pgcrypto";
@@ -60,10 +61,10 @@ create index if not exists equipos_comuna_idx on public.equipos (comuna_id);
 -- ============================================================================
 -- 4. USERS — participantes (anonymous auth; identity = equipo + apodo)
 -- ============================================================================
--- Participants authenticate via Supabase Anonymous Sign-in
--- (supabase.auth.signInAnonymously()) — no email, no personal password. The
--- app links the resulting anonymous auth.users row to a public.users row
--- right after sign-in. apodo is unique per equipo (two different teams may
+-- Participants authenticate with a synthetic email + random password created
+-- by the server; nothing is ever shown to them. The
+-- app creates the auth.users row with the admin client and links it to a
+-- public.users row, then opens the session. apodo is unique per equipo (two different teams may
 -- reuse the same nickname; within one team it must be unique).
 --
 -- comuna_id is SELF-DECLARED by the participant when they join, and it has ONE
