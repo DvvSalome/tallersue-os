@@ -22,7 +22,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // Sin maximumScale ni userScalable: bloquear el zoom impide agrandar el texto
+  // en el teléfono, que es donde se va a usar esto. WCAG 1.4.4 exige poder
+  // ampliar hasta el 200 %, y para alguien con baja visión es la diferencia
+  // entre poder responder el formulario y no poder.
 };
 
 export default function RootLayout({

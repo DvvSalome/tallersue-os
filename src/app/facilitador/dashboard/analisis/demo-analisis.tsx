@@ -64,7 +64,7 @@ export function DemoAnalisis() {
             buildFacilitadorCsv(listUsers(), listResponses(), listRespuestasAbiertas())
           }
           filename="taller-de-los-suenos-anonimizado.csv"
-          className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-all duration-150 enabled:hover:brightness-110 enabled:active:scale-[0.97] disabled:opacity-50"
+          className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-all duration-150 enabled:hover:brightness-110 enabled:active:scale-[0.97] disabled:opacity-50"
         >
           Exportar CSV anonimizado
         </DownloadCsvButton>

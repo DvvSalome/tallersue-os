@@ -195,7 +195,7 @@ export function LandingClient() {
               />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-coral" />
             </span>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-coral-dark">
+            <p className="text-xs sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-coral-dark">
               Medellín · 16 comunas
             </p>
           </div>

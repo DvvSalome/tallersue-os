@@ -191,7 +191,7 @@ export function Medidor({
         de {max} en promedio · n = {n}
       </p>
       {(etiquetaMin || etiquetaMax) && (
-        <p className="mt-1 flex w-full max-w-[160px] justify-between text-[10px] leading-tight text-muted/70">
+        <p className="mt-1 flex w-full max-w-[160px] justify-between text-[11px] sm:text-[10px] leading-tight text-muted/70">
           <span>{etiquetaMin}</span>
           <span className="text-right">{etiquetaMax}</span>
         </p>

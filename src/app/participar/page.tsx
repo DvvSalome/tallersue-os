@@ -174,7 +174,7 @@ export default function ParticiparPage() {
 
         <Link
           href="/"
-          className="group inline-flex items-center justify-center gap-1.5 self-center text-sm font-medium text-muted transition-colors hover:text-brand-dark"
+          className="group inline-flex min-h-11 items-center justify-center gap-1.5 self-center px-4 text-sm font-medium text-muted transition-colors hover:text-brand-dark"
         >
           <svg
             width="14"

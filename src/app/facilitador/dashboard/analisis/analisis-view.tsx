@@ -115,7 +115,7 @@ export function AnalisisView({
           <Pill activo={forma === "barras"} onClick={() => setForma("barras")}>
             Barras
           </Pill>
-          <span className="w-full text-[11px] leading-relaxed text-muted/70">
+          <span className="w-full text-xs sm:text-[11px] leading-relaxed text-muted/70">
             <strong className="text-foreground/80">Circulares:</strong> todo en anillo, agrupando
             la cola cuando hay más de {MAX_PORCIONES_ANILLO} categorías.{" "}
             <strong className="text-foreground/80">Mixtas:</strong> anillo solo cuando hay pocas
@@ -153,7 +153,7 @@ export function AnalisisView({
                 key={s.id}
                 onClick={() => setSeccionActiva(s.id)}
                 aria-current={s.id === seccion?.id ? "true" : undefined}
-                className={`shrink-0 rounded-xl px-3 py-2 text-left text-xs transition-colors ${
+                className={`min-h-14 shrink-0 rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-colors sm:min-h-0 sm:px-3 sm:py-2 sm:text-xs ${
                   s.id === seccion?.id
                     ? "bg-brand/20 text-foreground"
                     : "bg-white/[0.04] text-muted hover:bg-white/[0.08]"
@@ -224,7 +224,8 @@ function Pill({
     <button
       onClick={onClick}
       aria-pressed={activo}
-      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+      // min-h-11 = 44px, el mínimo recomendado para tocar con el pulgar.
+      className={`min-h-11 rounded-full px-4 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
         activo ? "bg-brand text-white" : "bg-white/[0.06] text-muted hover:bg-white/[0.12]"
       }`}
     >
@@ -381,7 +382,7 @@ function Serie({
       <Panel titulo={titulo} n={total} nota={serie.nota}>
         <Dona porciones={porciones} total={total} etiquetaCentro={`n=${total}`} />
         {cola.length > 0 && (
-          <p className="mt-2 text-[11px] leading-relaxed text-muted/70">
+          <p className="mt-2 text-xs sm:text-[11px] leading-relaxed text-muted/70">
             Se agruparon {cola.length} categorías con menos menciones. Cambia a &ldquo;Barras&rdquo;
             para verlas una por una.
           </p>
@@ -472,7 +473,7 @@ function PanelPerfiles({ perfiles, forma }: { perfiles: PerfilRow[]; forma: Form
 
 function NotaTexto() {
   return (
-    <p className="mt-3 text-[11px] leading-relaxed text-muted/70">
+    <p className="mt-3 text-xs sm:text-[11px] leading-relaxed text-muted/70">
       ✦ Temas agrupados automáticamente a partir de las respuestas escritas. No se muestra ningún
       texto individual.
     </p>

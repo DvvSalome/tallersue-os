@@ -26,7 +26,7 @@ export function LogoutButton({ className = "" }: { className?: string }) {
     <button
       onClick={onClick}
       disabled={loading}
-      className={`text-sm font-medium text-muted underline underline-offset-4 transition-colors hover:text-brand-dark ${className}`}
+      className={`inline-flex min-h-11 items-center px-2 text-sm font-medium text-muted underline underline-offset-4 transition-colors hover:text-brand-dark sm:min-h-0 sm:px-0 ${className}`}
     >
       {loading ? "Saliendo..." : "Cerrar sesión"}
     </button>

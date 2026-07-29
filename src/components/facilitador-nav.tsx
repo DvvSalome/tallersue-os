@@ -34,7 +34,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="group relative rounded-lg px-3 py-1.5 text-brand-dark/80 transition-colors hover:text-brand-dark"
+      className="inline-flex min-h-11 items-center group relative rounded-lg px-3 py-1.5 text-brand-dark/80 transition-colors hover:text-brand-dark sm:min-h-0"
     >
       <span className="relative z-10">{children}</span>
       <span className="absolute inset-x-2 bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-gradient-to-r from-brand to-coral transition-transform duration-300 group-hover:scale-x-100" />

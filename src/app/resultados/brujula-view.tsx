@@ -145,7 +145,7 @@ export function BrujulaView({
           <div className="flex flex-col gap-3">
             {barreras.map((b) => (
               <div key={b.tipo} className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#f2a35c]">
+                <p className="text-xs sm:text-[11px] font-semibold uppercase tracking-wider text-[#f2a35c]">
                   {NOMBRE_TIPO_BARRERA[b.tipo]}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -176,7 +176,7 @@ export function BrujulaView({
           <div className="grid gap-3 sm:grid-cols-2">
             {recursos.map((r) => (
               <div key={r.tipo} className="rounded-xl border border-brand/20 bg-brand/[0.06] p-3.5">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-dark">
+                <p className="text-xs sm:text-[11px] font-semibold uppercase tracking-wider text-brand-dark">
                   {NOMBRE_TIPO_RECURSO[r.tipo]}
                 </p>
                 <p className="mt-1.5 text-sm leading-relaxed text-foreground/90">
@@ -276,7 +276,7 @@ export function BrujulaView({
 
         {loQueImporta.mensajeDecisores && (
           <div className="mt-4 rounded-xl border-l-2 border-brand/60 bg-white/[0.04] p-3.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+            <p className="text-xs sm:text-[11px] font-semibold uppercase tracking-wider text-muted">
               Tu mensaje a quienes deciden
             </p>
             <p className="mt-1.5 text-sm italic leading-relaxed text-foreground/90">
@@ -314,7 +314,7 @@ export function BrujulaView({
                     {rec.porque}
                   </p>
                   <p className="mt-1.5 text-sm leading-relaxed text-foreground/90">{rec.accion}</p>
-                  <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
+                  <div className="mt-2.5 flex flex-wrap gap-1.5 text-xs sm:text-[11px]">
                     <span className="rounded-md bg-brand/15 px-2 py-0.5 font-semibold uppercase tracking-wide text-brand-dark">
                       {rec.horizonte}
                     </span>
@@ -423,7 +423,7 @@ function Vacio({ children }: { children: React.ReactNode }) {
 /** Marca lo que es lectura del sistema y no respuesta de la persona. */
 function NotaIA() {
   return (
-    <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted/70">
+    <p className="mt-3 flex items-start gap-1.5 text-xs sm:text-[11px] leading-relaxed text-muted/70">
       <span aria-hidden>✦</span>
       Interpretación orientativa generada a partir de tus respuestas. No es un diagnóstico.
     </p>
@@ -486,7 +486,7 @@ function Agujas({ agujas }: { agujas: Aguja[] }) {
 
 function Rotulo({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-1 mt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted/70 first:mt-0">
+    <p className="mb-1 mt-3 text-[11px] sm:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted/70 first:mt-0">
       {children}
     </p>
   );
@@ -511,12 +511,12 @@ function IndiceCard({ indice }: { indice: Indice }) {
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color }}>
+      <p className="text-xs sm:text-[11px] font-semibold uppercase tracking-wide" style={{ color }}>
         {indice.nivel ? nombreNivel(indice.nivel) : "Sin datos suficientes"}
       </p>
       <p className="text-[13px] leading-relaxed text-muted">{indice.lectura}</p>
       <div className="mt-1 border-t border-white/8 pt-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted/70">
+        <p className="text-[11px] sm:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted/70">
           ¿Qué puedes hacer?
         </p>
         <p className="mt-1 text-[13px] leading-relaxed text-foreground/90">{indice.accion}</p>
@@ -528,7 +528,7 @@ function IndiceCard({ indice }: { indice: Indice }) {
 function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">{etiqueta}</p>
+      <p className="text-xs sm:text-[11px] font-semibold uppercase tracking-wider text-muted">{etiqueta}</p>
       <p className="mt-0.5 text-sm text-foreground/90">{valor}</p>
     </div>
   );

@@ -26,7 +26,7 @@ export function ExportCsvButton() {
     <button
       onClick={onClick}
       disabled={loading}
-      className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-all duration-150 enabled:hover:brightness-110 enabled:active:scale-[0.97] disabled:opacity-50"
+      className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-all duration-150 enabled:hover:brightness-110 enabled:active:scale-[0.97] disabled:opacity-50"
     >
       {loading ? "Generando..." : "Exportar CSV anonimizado"}
     </button>

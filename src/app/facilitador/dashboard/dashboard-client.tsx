@@ -29,6 +29,7 @@ const ESTADO_CLASS: Record<ParticipantRow["estado"], string> = {
 };
 
 const inputClass =
+  "min-h-11 sm:min-h-0 " +
   "rounded-lg border border-white/15 bg-white/5 backdrop-blur-md px-3 py-2 text-sm text-foreground outline-none transition-all duration-200 focus:border-brand focus:bg-white/10 focus:shadow-[0_0_0_3px_var(--brand-light)]";
 
 export function DashboardClient({
@@ -79,67 +80,122 @@ export function DashboardClient({
         </select>
       </div>
 
-      <div className="glass overflow-x-auto rounded-2xl shadow-[var(--shadow-md)]">
-        <table className="w-full min-w-[640px] text-left text-sm">
+      {/* MÓVIL: tarjetas. Una tabla de 6 columnas necesita 640px y en un
+          teléfono solo se recorre con scroll horizontal, que esconde la mitad de
+          los datos. Es la vista principal porque el taller se usa en celular. */}
+      <ul className="flex flex-col gap-2.5 sm:hidden">
+        {filtered.map((r) => (
+          <li key={r.user_id} className="glass rounded-2xl p-4 shadow-[var(--shadow-sm)]">
+            <div className="flex items-start justify-between gap-3">
+              <Link
+                href={`/facilitador/dashboard/${r.user_id}`}
+                className="inline-flex min-h-11 items-center text-base font-semibold text-brand underline underline-offset-4"
+              >
+                {r.apodo}
+              </Link>
+              <span
+                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_CLASS[r.estado]}`}
+              >
+                {ESTADO_LABEL[r.estado]}
+              </span>
+            </div>
+
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted">
+              <span className="rounded-md bg-brand-light px-1.5 py-0.5 font-display text-xs font-semibold tracking-wide text-brand-dark">
+                {r.equipo_codigo}
+              </span>
+              {r.equipo_nombre && <span>{r.equipo_nombre}</span>}
+              <span>· {r.edad} años</span>
+              <span>· bloque {r.bloque_alcanzado}/5</span>
+            </p>
+
+            <div className="mt-3 flex items-center gap-2.5">
+              <span className="h-2 flex-1 overflow-hidden rounded-full bg-border/60">
+                <span
+                  className="block h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${(r.items_respondidos / TOTAL_ITEMS_OBLIGATORIOS) * 100}%`,
+                    background: "linear-gradient(90deg, #7c3aed 0%, #a78bfa 60%, #f2734a 100%)",
+                  }}
+                />
+              </span>
+              <span className="shrink-0 text-[13px] tabular-nums text-muted">
+                {r.items_respondidos}/{TOTAL_ITEMS_OBLIGATORIOS}
+              </span>
+            </div>
+          </li>
+        ))}
+        {filtered.length === 0 && (
+          <li className="glass rounded-2xl p-6 text-center text-sm text-muted">
+            No hay participantes que coincidan con los filtros.
+          </li>
+        )}
+      </ul>
+
+      {/* ESCRITORIO: la tabla, donde sí caben las seis columnas. */}
+      <div className="glass hidden overflow-x-auto rounded-2xl shadow-[var(--shadow-md)] sm:block">
+        <table className="w-full text-left text-sm">
           <thead className="border-b border-white/10 bg-gradient-to-r from-brand-light to-transparent text-xs uppercase tracking-wide text-brand-dark">
             <tr>
               <th className="px-4 py-3">Apodo</th>
               <th className="px-4 py-3">Equipo</th>
               <th className="px-4 py-3">Edad</th>
-              <th className="px-4 py-3">Bloque alcanzado</th>
+              <th className="px-4 py-3">Bloque</th>
               <th className="px-4 py-3">Progreso</th>
               <th className="px-4 py-3">Estado</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
-                <tr
-                  key={r.user_id}
-                  className="border-b border-white/10 last:border-0 transition-colors duration-150 hover:bg-brand-light"
-                >
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/facilitador/dashboard/${r.user_id}`}
-                      className="font-medium text-brand underline underline-offset-4 transition-colors hover:text-brand-dark"
-                    >
-                      {r.apodo}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-md bg-brand-light px-1.5 py-0.5 font-display text-xs font-semibold tracking-wide text-brand-dark">
-                      {r.equipo_codigo}
+              <tr
+                key={r.user_id}
+                className="border-b border-white/10 transition-colors duration-150 last:border-0 hover:bg-brand-light"
+              >
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/facilitador/dashboard/${r.user_id}`}
+                    className="font-medium text-brand underline underline-offset-4 transition-colors hover:text-brand-dark"
+                  >
+                    {r.apodo}
+                  </Link>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="rounded-md bg-brand-light px-1.5 py-0.5 font-display text-xs font-semibold tracking-wide text-brand-dark">
+                    {r.equipo_codigo}
+                  </span>
+                  {r.equipo_nombre && <span className="ml-1.5 text-muted">{r.equipo_nombre}</span>}
+                </td>
+                <td className="px-4 py-3 tabular-nums">{r.edad}</td>
+                <td className="px-4 py-3 tabular-nums">{r.bloque_alcanzado}/5</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-16 overflow-hidden rounded-full bg-border/60">
+                      <span
+                        className="block h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(r.items_respondidos / TOTAL_ITEMS_OBLIGATORIOS) * 100}%`,
+                          background:
+                            "linear-gradient(90deg, #7c3aed 0%, #a78bfa 60%, #f2734a 100%)",
+                        }}
+                      />
                     </span>
-                    {r.equipo_nombre && <span className="ml-1.5 text-muted">{r.equipo_nombre}</span>}
-                  </td>
-                  <td className="px-4 py-3 tabular-nums">{r.edad}</td>
-                  <td className="px-4 py-3 tabular-nums">{r.bloque_alcanzado}/5</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="h-1.5 w-16 overflow-hidden rounded-full bg-border/60">
-                        <span
-                          className="block h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${(r.items_respondidos / TOTAL_ITEMS_OBLIGATORIOS) * 100}%`,
-                            background:
-                              "linear-gradient(90deg, #7c3aed 0%, #a78bfa 60%, #f2734a 100%)",
-                          }}
-                        />
-                      </span>
-                      <span className="tabular-nums text-muted">
-                        {r.items_respondidos}/{TOTAL_ITEMS_OBLIGATORIOS}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${ESTADO_CLASS[r.estado]}`}>
-                      {ESTADO_LABEL[r.estado]}
+                    <span className="tabular-nums text-muted">
+                      {r.items_respondidos}/{TOTAL_ITEMS_OBLIGATORIOS}
                     </span>
-                  </td>
-                </tr>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${ESTADO_CLASS[r.estado]}`}
+                  >
+                    {ESTADO_LABEL[r.estado]}
+                  </span>
+                </td>
+              </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted">
+                <td colSpan={6} className="px-4 py-6 text-center text-muted">
                   No hay participantes que coincidan con los filtros.
                 </td>
               </tr>

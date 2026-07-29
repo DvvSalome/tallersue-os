@@ -162,7 +162,7 @@ export default function DemoPage() {
             setBorrado(false);
             sembrar();
           }}
-          className="self-start text-sm text-brand underline underline-offset-4"
+          className="inline-flex min-h-11 items-center self-start text-sm text-brand underline underline-offset-4"
         >
           Volver a generar el grupo de muestra
         </button>
@@ -172,7 +172,7 @@ export default function DemoPage() {
             resetDemoData();
             setBorrado(true);
           }}
-          className="self-start text-sm text-muted underline underline-offset-4 transition-colors hover:text-coral-dark"
+          className="inline-flex min-h-11 items-center self-start text-sm text-muted underline underline-offset-4 transition-colors hover:text-coral-dark"
         >
           Borrar los datos de demo del navegador
         </button>
