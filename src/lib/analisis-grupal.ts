@@ -16,11 +16,10 @@
  *  dos no dicen lo mismo, la interfaz anuncia un umbral distinto al que la base
  *  aplica y el facilitador no entiende por qué falta un panel.
  *
- *  Bajado a 3 por decisión del equipo. Queda dicho que el Documento Técnico (§4)
- *  y el brief (§17) piden 5, y que con 3 la reidentificación es más fácil:
- *  conociendo a dos integrantes de un grupo de tres se deducen las respuestas
- *  del tercero. */
-export const K_ANON_MIN = 3;
+ *  Son 5 porque lo piden el Documento Técnico (§4) y el brief (§17). Bajarlo
+ *  facilita la reidentificación: en un grupo de tres, conociendo a dos se
+ *  deducen las respuestas del tercero. */
+export const K_ANON_MIN = 5;
 
 /** Distribución de una pregunta cerrada dentro de un grupo. */
 export type ClosedRow = {

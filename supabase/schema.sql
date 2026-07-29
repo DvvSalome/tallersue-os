@@ -222,12 +222,13 @@ create trigger responses_touch_updated_at
 -- una vez y volverá a cambiar. El equivalente en TypeScript es K_ANON_MIN en
 -- src/lib/analisis-grupal.ts: los dos tienen que decir lo mismo.
 --
--- ADVERTENCIA: bajarlo facilita la reidentificación. Con 3, quien conozca las
--- respuestas de dos integrantes deduce las del tercero, y el instrumento
+-- ADVERTENCIA antes de bajarlo: con 3, quien conozca las respuestas de dos
+-- integrantes de un grupo de tres deduce las del tercero, y el instrumento
 -- pregunta por violencia familiar, consumo de sustancias y autoestima. El
--- Documento Técnico (§4) y el brief de diseño (§17) piden 5.
+-- Documento Técnico (§4) pide "un mínimo de cinco respuestas para preservar el
+-- anonimato" y el brief (§17) lo marca como ABSOLUTAMENTE OBLIGATORIO.
 create or replace function public.k_anonimato_minimo()
-returns integer language sql immutable as $$ select 3 $$;
+returns integer language sql immutable as $$ select 5 $$;
 
 -- Which instrument version the app should read/aggregate. Derived from the
 -- catalog so the views never hardcode a number.
