@@ -198,7 +198,6 @@ export function generarDatosFicticios(semilla = 20260728): DatosDemo {
       id: `demo-equipo-${comuna.id}`,
       codigo: `DEMO${comuna.id.toString().padStart(2, "0")}`,
       nombre: `Grupo de muestra ${comuna.id}`,
-      comunaId: comuna.id,
       activo: true,
       createdAt: new Date(ahora - 86400000 * 7).toISOString(),
     };

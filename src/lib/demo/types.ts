@@ -2,7 +2,6 @@ export type DemoEquipo = {
   id: string;
   codigo: string;
   nombre: string | null;
-  comunaId: number;
   activo: boolean;
   createdAt: string;
 };

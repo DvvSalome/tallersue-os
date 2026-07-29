@@ -8,8 +8,6 @@ export type ParticipantRow = {
   user_id: string;
   apodo: string;
   edad: number;
-  comuna_id: number;
-  comuna_nombre: string;
   equipo_codigo: string;
   equipo_nombre: string | null;
   items_respondidos: number;
@@ -35,23 +33,21 @@ const inputClass =
 
 export function DashboardClient({
   rows,
-  scopedToOneComuna,
 }: {
   rows: ParticipantRow[];
-  scopedToOneComuna: boolean;
 }) {
   const [search, setSearch] = useState("");
-  const [comuna, setComuna] = useState("");
+  const [grupo, setGrupo] = useState("");
   const [estado, setEstado] = useState("");
 
-  const comunas = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.comuna_nombre))).sort(),
+  const grupos = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.equipo_codigo))).sort(),
     [rows],
   );
 
   const filtered = rows.filter((r) => {
     if (search && !r.apodo.toLowerCase().includes(search.toLowerCase())) return false;
-    if (comuna && r.comuna_nombre !== comuna) return false;
+    if (grupo && r.equipo_codigo !== grupo) return false;
     if (estado && r.estado !== estado) return false;
     return true;
   });
@@ -65,10 +61,10 @@ export function DashboardClient({
           placeholder="Buscar por apodo..."
           className={`min-w-0 flex-1 ${inputClass}`}
         />
-        {!scopedToOneComuna && (
-          <select value={comuna} onChange={(e) => setComuna(e.target.value)} className={inputClass}>
-            <option value="">Todas las comunas</option>
-            {comunas.map((c) => (
+        {grupos.length > 1 && (
+          <select value={grupo} onChange={(e) => setGrupo(e.target.value)} className={inputClass}>
+            <option value="">Todos los grupos</option>
+            {grupos.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -89,7 +85,6 @@ export function DashboardClient({
             <tr>
               <th className="px-4 py-3">Apodo</th>
               <th className="px-4 py-3">Equipo</th>
-              <th className="px-4 py-3">Comuna</th>
               <th className="px-4 py-3">Edad</th>
               <th className="px-4 py-3">Bloque alcanzado</th>
               <th className="px-4 py-3">Progreso</th>
@@ -116,9 +111,8 @@ export function DashboardClient({
                     </span>
                     {r.equipo_nombre && <span className="ml-1.5 text-muted">{r.equipo_nombre}</span>}
                   </td>
-                  <td className="px-4 py-3">{r.comuna_nombre}</td>
                   <td className="px-4 py-3 tabular-nums">{r.edad}</td>
-                  <td className="px-4 py-3 tabular-nums">{r.bloque_alcanzado}/4</td>
+                  <td className="px-4 py-3 tabular-nums">{r.bloque_alcanzado}/5</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className="h-1.5 w-16 overflow-hidden rounded-full bg-border/60">

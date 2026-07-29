@@ -19,7 +19,7 @@ export function DemoDashboard() {
 
   if (!actor || actor.kind !== "facilitador") return null;
 
-  const rows = computeParticipantRows(actor.comunaId);
+  const rows = computeParticipantRows();
   const total = rows.length;
   const completados = rows.filter((r) => r.estado === "completado").length;
   const enProceso = rows.filter((r) => r.estado === "en_proceso").length;
@@ -38,7 +38,7 @@ export function DemoDashboard() {
         ]}
       />
 
-      <DashboardClient rows={rows} scopedToOneComuna={actor.comunaId !== null} />
+      <DashboardClient rows={rows} />
     </main>
   );
 }

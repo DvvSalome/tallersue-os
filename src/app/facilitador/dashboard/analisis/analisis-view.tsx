@@ -3,7 +3,7 @@
 import { optionLabel, type Item } from "@/lib/items";
 import { seccionesResueltas } from "@/lib/mapa-colectivo";
 import { FacilitadorNav } from "@/components/facilitador-nav";
-import { K_ANON_MIN, type ClosedRow, type TextoRow } from "@/lib/analisis-grupal";
+import { K_ANON_MIN, nombreGrupo, type ClosedRow, type TextoRow } from "@/lib/analisis-grupal";
 
 // "Nuestro Mapa" — dashboard grupal ANÓNIMO (doc §4).
 //
@@ -37,8 +37,8 @@ export function AnalisisView({
             Nuestro Mapa de los Sueños
           </h1>
           <p className="max-w-2xl text-sm text-muted">
-            Lectura colectiva y anónima, agregada por comuna. No se muestra ningún agregado de una
-            comuna con menos de {K_ANON_MIN} respuestas, y del texto libre solo se muestran los
+            Lectura colectiva y anónima, agregada por grupo. No se muestra ningún agregado de un
+            grupo con menos de {K_ANON_MIN} respuestas, y del texto libre solo se muestran los
             temas: nunca lo que escribió una persona.
           </p>
         </div>
@@ -81,7 +81,7 @@ function ItemPanel({
   closedRows: ClosedRow[];
   textoRows: TextoRow[];
 }) {
-  const comunas = agruparPorComuna(closedRows, textoRows);
+  const grupos = agruparPorGrupo(closedRows, textoRows);
 
   return (
     <div className="rounded-xl glass p-4 shadow-[var(--shadow-sm)]">
@@ -90,16 +90,16 @@ function ItemPanel({
         {item.etiqueta}
       </p>
 
-      {comunas.length === 0 ? (
+      {grupos.length === 0 ? (
         <p className="text-sm text-muted/70">
-          Sin datos suficientes (mínimo {K_ANON_MIN} respuestas por comuna).
+          Sin datos suficientes (mínimo {K_ANON_MIN} respuestas por grupo).
         </p>
       ) : (
         <div className="flex flex-col gap-4">
-          {comunas.map(({ comuna, total, cerradas, textos }) => (
-            <div key={comuna}>
+          {grupos.map(({ clave, etiqueta, total, cerradas, textos }) => (
+            <div key={clave}>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                {comuna} · n={total}
+                {etiqueta} · n={total}
               </p>
 
               {cerradas.length > 0 && (
@@ -190,21 +190,23 @@ function etiquetaOpcion(item: Item, value: string) {
   return optionLabel(item, value);
 }
 
-function agruparPorComuna(closedRows: ClosedRow[], textoRows: TextoRow[]) {
-  const nombres = new Set([
-    ...closedRows.map((r) => r.comuna_nombre),
-    ...textoRows.map((r) => r.comuna_nombre),
+function agruparPorGrupo(closedRows: ClosedRow[], textoRows: TextoRow[]) {
+  const ids = new Set([
+    ...closedRows.map((r) => r.equipo_id),
+    ...textoRows.map((r) => r.equipo_id),
   ]);
-  return Array.from(nombres)
-    .sort((a, b) => a.localeCompare(b))
-    .map((comuna) => {
-      const cerradas = closedRows.filter((r) => r.comuna_nombre === comuna);
-      const textos = textoRows.filter((r) => r.comuna_nombre === comuna);
+  return Array.from(ids)
+    .map((clave) => {
+      const cerradas = closedRows.filter((r) => r.equipo_id === clave);
+      const textos = textoRows.filter((r) => r.equipo_id === clave);
+      const muestra = cerradas[0] ?? textos[0];
       return {
-        comuna,
-        total: cerradas[0]?.total_comuna ?? textos[0]?.total_comuna ?? 0,
+        clave,
+        etiqueta: muestra ? nombreGrupo(muestra.equipo_codigo, muestra.equipo_nombre) : clave,
+        total: cerradas[0]?.total_grupo ?? textos[0]?.total_grupo ?? 0,
         cerradas,
         textos,
       };
-    });
+    })
+    .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta));
 }

@@ -3,24 +3,20 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDemoActor } from "@/lib/demo/use-demo-actor";
-import { comunaNombre } from "@/lib/comunas";
 import { createEquipo, listEquipos, listUsers, setEquipoActivo } from "@/lib/demo/store";
 import { FacilitadorNav } from "@/components/facilitador-nav";
 import { EquiposClient, type EquipoRow } from "./equipos-client";
 
-function computeRows(comunaScope: number | null): EquipoRow[] {
+function computeRows(): EquipoRow[] {
   const users = listUsers();
   const counts = new Map<string, number>();
   for (const u of users) counts.set(u.equipoId, (counts.get(u.equipoId) ?? 0) + 1);
 
   return listEquipos()
-    .filter((e) => comunaScope === null || e.comunaId === comunaScope)
     .map((e) => ({
       id: e.id,
       codigo: e.codigo,
       nombre: e.nombre,
-      comunaId: e.comunaId,
-      comunaNombre: comunaNombre(e.comunaId),
       activo: e.activo,
       participantes: counts.get(e.id) ?? 0,
       createdAt: e.createdAt,
@@ -39,7 +35,7 @@ export function DemoEquipos() {
 
   if (!actor || actor.kind !== "facilitador") return null;
 
-  const rows = computeRows(actor.comunaId);
+  const rows = computeRows();
   void refreshKey; // referenced so recompute-on-change reads are obvious at the call site
 
   return (
@@ -47,7 +43,6 @@ export function DemoEquipos() {
       <FacilitadorNav codigoGrupo={actor.codigoGrupo} />
       <EquiposClient
         rows={rows}
-        comunaIdFija={actor.comunaId}
         onCreate={async (input) => {
           createEquipo(input);
           setRefreshKey((k) => k + 1);

@@ -31,6 +31,11 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
       style={{
         backgroundImage:
           "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+        // El desplegable lo dibuja el sistema operativo, no la página. Sin esto
+        // las <option> heredan el texto claro del tema oscuro y se pintan sobre
+        // el fondo blanco nativo: el menú se abre en blanco sobre blanco y
+        // parece que no se pudiera seleccionar nada.
+        colorScheme: "dark",
         ...(props.style ?? {}),
       }}
     />

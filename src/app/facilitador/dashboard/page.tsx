@@ -18,9 +18,9 @@ export default async function DashboardPage() {
   const { data } = await supabase
     .from("v_participant_progress")
     .select(
-      "user_id, apodo, edad, comuna_id, comuna_nombre, equipo_codigo, equipo_nombre, items_respondidos, bloque_alcanzado, estado, ultima_actividad",
+      "user_id, apodo, edad, equipo_codigo, equipo_nombre, items_respondidos, bloque_alcanzado, estado, ultima_actividad",
     )
-    .order("comuna_nombre")
+    .order("equipo_codigo")
     .order("apodo");
 
   const rows: ParticipantRow[] = data ?? [];
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
         ]}
       />
 
-      <DashboardClient rows={rows} scopedToOneComuna={actor.comunaId !== null} />
+      <DashboardClient rows={rows} />
     </main>
   );
 }

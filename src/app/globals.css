@@ -616,3 +616,10 @@ a {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Respaldo para navegadores que sí permiten estilar las <option>: sin esto, en
+   tema oscuro el desplegable nativo queda ilegible (texto claro sobre blanco). */
+select option {
+  background-color: #201a2c;
+  color: #f2eefb;
+}

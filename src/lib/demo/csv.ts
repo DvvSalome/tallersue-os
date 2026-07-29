@@ -6,7 +6,6 @@ import {
   camposAbiertos,
 } from "@/lib/items";
 import { describirValor } from "@/lib/respuestas";
-import { comunaNombre } from "@/lib/comunas";
 import type { DemoRespuestaAbierta, DemoResponse, DemoUser } from "./types";
 import { listEquipos } from "./store";
 
@@ -50,8 +49,8 @@ export function buildFacilitadorCsv(
   const clavesPuras = new Set(ITEMS_ABIERTOS_PUROS.map((i) => i.clave));
 
   const header = [
-    "comuna",
     "equipo",
+    "equipo_nombre",
     "edad",
     "bloque_alcanzado",
     "estado",
@@ -83,9 +82,10 @@ export function buildFacilitadorCsv(
 
     const equipo = equipos.get(u.equipoId);
     const row = [
-      // Comuna del equipo (unidad territorial del taller), no la autodeclarada.
-      comunaNombre(equipo?.comunaId ?? u.comunaId),
+      // La unidad es el GRUPO. La comuna autodeclarada del participante no se
+      // exporta: solo sirve para mostrarle sus puntos de atención.
       equipo?.codigo ?? "",
+      equipo?.nombre ?? "",
       String(u.edad),
       String(bloqueAlcanzado),
       estado,

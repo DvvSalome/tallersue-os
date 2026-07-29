@@ -2,28 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { COMUNAS } from "@/lib/comunas";
 import { generateCodigo } from "@/lib/team-code";
 import { createClient } from "@/lib/supabase/client";
-import { Field, Select, TextInput, PrimaryButton, ErrorBanner } from "@/components/ui";
+import { Field, TextInput, PrimaryButton, ErrorBanner } from "@/components/ui";
 
 export type EquipoRow = {
   id: string;
   codigo: string;
   nombre: string | null;
-  comunaId: number;
-  comunaNombre: string;
   activo: boolean;
   participantes: number;
   createdAt: string;
 };
 
-async function defaultCreate(input: { codigo: string; nombre: string | null; comunaId: number }) {
+async function defaultCreate(input: { codigo: string; nombre: string | null }) {
   const supabase = createClient();
   const { error } = await supabase.from("equipos").insert({
     codigo: input.codigo,
     nombre: input.nombre,
-    comuna_id: input.comunaId,
   });
   return { error: error ? "No se pudo crear el equipo. Intenta de nuevo." : undefined };
 }
@@ -35,18 +31,15 @@ async function defaultToggle(row: EquipoRow) {
 
 export function EquiposClient({
   rows,
-  comunaIdFija,
   onCreate = defaultCreate,
   onToggle = defaultToggle,
 }: {
   rows: EquipoRow[];
-  comunaIdFija: number | null;
-  onCreate?: (input: { codigo: string; nombre: string | null; comunaId: number }) => Promise<{ error?: string }>;
+  onCreate?: (input: { codigo: string; nombre: string | null }) => Promise<{ error?: string }>;
   onToggle?: (row: EquipoRow) => Promise<void>;
 }) {
   const router = useRouter();
   const [nombre, setNombre] = useState("");
-  const [comunaId, setComunaId] = useState(comunaIdFija ? String(comunaIdFija) : "");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [ultimoCodigo, setUltimoCodigo] = useState<string | null>(null);
@@ -55,10 +48,6 @@ export function EquiposClient({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!comunaId) {
-      setError("Selecciona una comuna.");
-      return;
-    }
     setCreating(true);
     setUltimoCodigo(null);
     try {
@@ -66,7 +55,6 @@ export function EquiposClient({
       const { error: createError } = await onCreate({
         codigo,
         nombre: nombre.trim() || null,
-        comunaId: Number(comunaId),
       });
       if (createError) {
         setError(createError);
@@ -113,22 +101,6 @@ export function EquiposClient({
             />
           </Field>
         </div>
-        {!comunaIdFija && (
-          <div className="sm:w-56">
-            <Field label="Comuna">
-              <Select value={comunaId} onChange={(e) => setComunaId(e.target.value)}>
-                <option value="" disabled>
-                  Selecciona
-                </option>
-                {COMUNAS.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.id}. {c.nombre}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-        )}
         <PrimaryButton type="submit" disabled={creating} className="w-auto px-6 py-3 sm:mb-0">
           {creating ? "Creando..." : "Crear código"}
         </PrimaryButton>
@@ -159,7 +131,7 @@ export function EquiposClient({
               <div>
                 <p className="font-medium">{row.nombre ?? "Sin nombre"}</p>
                 <p className="text-xs text-muted">
-                  {row.comunaNombre} · {row.participantes} participante{row.participantes === 1 ? "" : "s"}
+                  {row.participantes} participante{row.participantes === 1 ? "" : "s"}
                 </p>
               </div>
             </div>

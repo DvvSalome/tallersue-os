@@ -24,7 +24,7 @@ export async function GET() {
   const [{ data: progreso }, { data: responses }, { data: textos }] = await Promise.all([
     supabase
       .from("v_participant_progress")
-      .select("user_id, edad, comuna_nombre, equipo_codigo, bloque_alcanzado, estado"),
+      .select("user_id, edad, equipo_codigo, equipo_nombre, bloque_alcanzado, estado"),
     supabase
       .from("responses")
       .select("user_id, item, valor")
@@ -53,8 +53,8 @@ export async function GET() {
   const clavesTexto = camposAbiertos().map((c) => c.clave);
 
   const header = [
-    "comuna",
     "equipo",
+    "equipo_nombre",
     "edad",
     "bloque_alcanzado",
     "estado",
@@ -68,8 +68,8 @@ export async function GET() {
     const cerradas = cerradasPorUsuario.get(p.user_id) ?? new Map<number, StoredValor>();
     const categorias = categoriasPorUsuario.get(p.user_id) ?? new Map<string, string>();
     const row = [
-      p.comuna_nombre,
       p.equipo_codigo,
+      p.equipo_nombre ?? "",
       String(p.edad),
       String(p.bloque_alcanzado),
       p.estado,

@@ -1,4 +1,3 @@
-import { comunaNombre } from "@/lib/comunas";
 import {
   INSTRUMENTO_VERSION,
   ITEMS_ABIERTOS_PUROS,
@@ -7,7 +6,7 @@ import {
 import { listEquipos, listRespuestasAbiertas, listResponses, listUsers } from "./store";
 import type { ParticipantRow } from "@/app/facilitador/dashboard/dashboard-client";
 
-export function computeParticipantRows(comunaScope: number | null): ParticipantRow[] {
+export function computeParticipantRows(): ParticipantRow[] {
   const equipos = new Map(listEquipos().map((e) => [e.id, e]));
   const responses = listResponses().filter((r) => r.version === INSTRUMENTO_VERSION);
   const abiertas = listRespuestasAbiertas().filter((r) => r.version === INSTRUMENTO_VERSION);
@@ -16,10 +15,6 @@ export function computeParticipantRows(comunaScope: number | null): ParticipantR
   const clavesPuras = new Set(ITEMS_ABIERTOS_PUROS.map((i) => i.clave));
 
   return listUsers()
-    // El alcance del facilitador va por la comuna del EQUIPO, igual que la RLS.
-    .filter(
-      (u) => comunaScope === null || equipos.get(u.equipoId)?.comunaId === comunaScope,
-    )
     .map((u) => {
       const equipo = equipos.get(u.equipoId);
       const own = responses.filter((r) => r.userId === u.id);
@@ -42,8 +37,6 @@ export function computeParticipantRows(comunaScope: number | null): ParticipantR
         user_id: u.id,
         apodo: u.apodo,
         edad: u.edad,
-        comuna_id: equipo?.comunaId ?? u.comunaId,
-        comuna_nombre: comunaNombre(equipo?.comunaId ?? u.comunaId),
         equipo_codigo: equipo?.codigo ?? "—",
         equipo_nombre: equipo?.nombre ?? null,
         items_respondidos: respondidas,
@@ -52,5 +45,5 @@ export function computeParticipantRows(comunaScope: number | null): ParticipantR
         ultima_actividad: ultimaActividad,
       };
     })
-    .sort((a, b) => a.comuna_nombre.localeCompare(b.comuna_nombre) || a.apodo.localeCompare(b.apodo));
+    .sort((a, b) => a.equipo_codigo.localeCompare(b.equipo_codigo) || a.apodo.localeCompare(b.apodo));
 }

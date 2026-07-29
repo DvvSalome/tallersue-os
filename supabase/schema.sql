@@ -50,13 +50,20 @@ create table if not exists public.equipos (
   id uuid primary key default gen_random_uuid(),
   codigo text not null unique,
   nombre text,
-  comuna_id smallint not null references public.comunas (id),
+  -- Sin uso: la comuna solo aplica al participante (líneas de atención).
+  comuna_id smallint references public.comunas (id),
   activo boolean not null default true,
   created_by uuid references public.facilitadores (id),
   created_at timestamptz not null default now()
 );
 
 create index if not exists equipos_comuna_idx on public.equipos (comuna_id);
+
+-- La comuna del equipo dejó de existir como concepto: la comuna solo sirve para
+-- mostrarle al participante sus puntos de atención, así que el facilitador no la
+-- elige al crear un código. La columna queda por compatibilidad con instalaciones
+-- previas, pero opcional y sin uso: el grupo (equipo) es la unidad del taller.
+alter table public.equipos alter column comuna_id drop not null;
 
 -- ============================================================================
 -- 4. USERS — participantes (anonymous auth; identity = equipo + apodo)
@@ -346,10 +353,7 @@ select
   u.id as user_id,
   u.apodo,
   u.edad,
-  -- Comuna del EQUIPO (unidad territorial del taller), no la autodeclarada por
-  -- el participante: esa última es solo para sus líneas de atención.
-  e.comuna_id,
-  c.nombre as comuna_nombre,
+
   (coalesce(cer.n, 0) + coalesce(abi.n, 0)) as items_respondidos,
   greatest(coalesce(cer.bloque_max, 0), coalesce(abi.bloque_max, 0)) as bloque_alcanzado,
   case
@@ -364,52 +368,52 @@ select
   e.nombre as equipo_nombre
 from public.users u
 join public.equipos e on e.id = u.equipo_id
-join public.comunas c on c.id = e.comuna_id
 cross join total_items t
 left join cerradas cer on cer.user_id = u.id
 left join abiertas_puras abi on abi.user_id = u.id;
 
--- Group analysis for closed-ended items (likert/multiple/unica), with
--- k-anonymity enforced (comuna must have >= 5 distinct respondents for that
--- item to be included). This view intentionally excludes 'texto' raw values.
--- "comuna" here means the EQUIPO's comuna — the territorial unit of the
--- workshop. The participant's self-declared comuna is never an analysis axis.
+-- Group analysis for closed-ended items (likert/multiple/unica), aggregated by
+-- GRUPO (equipo) — the unit the facilitador actually convenes. Comuna is not an
+-- analysis axis: the participant declares it only so the app can show them
+-- nearby support points. k-anonymity is enforced per grupo: an item needs >= 5
+-- distinct respondents in that grupo to appear. Raw 'texto' values never leave.
+drop function if exists public.v_group_analysis_closed();
 create or replace function public.v_group_analysis_closed()
 returns table (
   bloque smallint,
   item smallint,
-  comuna_id smallint,
-  comuna_nombre text,
+  equipo_id uuid,
+  equipo_codigo text,
+  equipo_nombre text,
   tipo text,
   opcion text,
   n integer,
-  total_comuna integer,
+  total_grupo integer,
   porcentaje numeric,
   promedio numeric
 )
 language sql stable as $$
   with base as (
     select
-      r.bloque, r.item, r.tipo, e.comuna_id, c.nombre as comuna_nombre,
-      r.valor, r.user_id
+      r.bloque, r.item, r.tipo, e.id as equipo_id, e.codigo as equipo_codigo,
+      e.nombre as equipo_nombre, r.valor, r.user_id
     from public.responses r
     join public.users u on u.id = r.user_id
     join public.equipos e on e.id = u.equipo_id
-    join public.comunas c on c.id = e.comuna_id
     where r.tipo in ('likert', 'multiple', 'unica')
       and r.version = public.instrumento_version_actual()
   ),
-  comuna_counts as (
-    select bloque, item, comuna_id, count(distinct user_id) as total_comuna
+  grupo_counts as (
+    select bloque, item, equipo_id, count(distinct user_id) as total_grupo
     from base
-    group by bloque, item, comuna_id
+    group by bloque, item, equipo_id
   ),
   eligible as (
-    select * from comuna_counts where total_comuna >= 5
+    select * from grupo_counts where total_grupo >= 5
   ),
   exploded as (
     -- unica / likert: single value per row; multiple: one row per selected option
-    select b.bloque, b.item, b.tipo, b.comuna_id, b.comuna_nombre, b.user_id,
+    select b.bloque, b.item, b.tipo, b.equipo_id, b.equipo_codigo, b.equipo_nombre, b.user_id,
       case
         when b.tipo = 'unica' then b.valor->>'opcion'
         when b.tipo = 'likert' then b.valor->>'valor'
@@ -422,18 +426,19 @@ language sql stable as $$
     where b.tipo <> 'multiple' or true
   )
   select
-    e.bloque, e.item, e.comuna_id, e.comuna_nombre, e.tipo, e.opcion,
+    e.bloque, e.item, e.equipo_id, e.equipo_codigo, e.equipo_nombre, e.tipo, e.opcion,
     count(*)::int as n,
-    el.total_comuna::int,
-    round(100.0 * count(*) / nullif(el.total_comuna, 0), 1) as porcentaje,
+    el.total_grupo::int,
+    round(100.0 * count(*) / nullif(el.total_grupo, 0), 1) as porcentaje,
     case when e.tipo = 'likert'
       then round(avg(e.opcion::numeric), 2)
       else null
     end as promedio
   from exploded e
-  join eligible el on el.bloque = e.bloque and el.item = e.item and el.comuna_id = e.comuna_id
+  join eligible el on el.bloque = e.bloque and el.item = e.item and el.equipo_id = e.equipo_id
   where e.opcion is not null
-  group by e.bloque, e.item, e.comuna_id, e.comuna_nombre, e.tipo, e.opcion, el.total_comuna;
+  group by e.bloque, e.item, e.equipo_id, e.equipo_codigo, e.equipo_nombre,
+           e.tipo, e.opcion, el.total_grupo;
 $$;
 
 -- Group analysis for free-text answers: only the coded category is exposed,
@@ -449,43 +454,44 @@ returns table (
   bloque smallint,
   item smallint,
   clave text,
-  comuna_id smallint,
-  comuna_nombre text,
+  equipo_id uuid,
+  equipo_codigo text,
+  equipo_nombre text,
   categoria_codificada text,
   n integer,
-  total_comuna integer,
+  total_grupo integer,
   porcentaje numeric
 )
 language sql stable as $$
   with base as (
-    select ra.bloque, ra.item, ra.clave, e.comuna_id, c.nombre as comuna_nombre,
-      ra.categoria_codificada, ra.user_id
+    select ra.bloque, ra.item, ra.clave, e.id as equipo_id, e.codigo as equipo_codigo,
+      e.nombre as equipo_nombre, ra.categoria_codificada, ra.user_id
     from public.respuestas_abiertas ra
     join public.users u on u.id = ra.user_id
     join public.equipos e on e.id = u.equipo_id
-    join public.comunas c on c.id = e.comuna_id
     where ra.categoria_codificada is not null
       and ra.version = public.instrumento_version_actual()
   ),
-  comuna_counts as (
-    select bloque, item, clave, comuna_id, count(distinct user_id) as total_comuna
+  grupo_counts as (
+    select bloque, item, clave, equipo_id, count(distinct user_id) as total_grupo
     from base
-    group by bloque, item, clave, comuna_id
+    group by bloque, item, clave, equipo_id
   ),
   eligible as (
-    select * from comuna_counts where total_comuna >= 5
+    select * from grupo_counts where total_grupo >= 5
   )
   select
-    b.bloque, b.item, b.clave, b.comuna_id, b.comuna_nombre, b.categoria_codificada,
+    b.bloque, b.item, b.clave, b.equipo_id, b.equipo_codigo, b.equipo_nombre,
+    b.categoria_codificada,
     count(*)::int as n,
-    e.total_comuna::int,
-    round(100.0 * count(*) / nullif(e.total_comuna, 0), 1) as porcentaje
+    e.total_grupo::int,
+    round(100.0 * count(*) / nullif(e.total_grupo, 0), 1) as porcentaje
   from base b
   join eligible e
     on e.bloque = b.bloque and e.item = b.item and e.clave = b.clave
-   and e.comuna_id = b.comuna_id
-  group by b.bloque, b.item, b.clave, b.comuna_id, b.comuna_nombre,
-           b.categoria_codificada, e.total_comuna;
+   and e.equipo_id = b.equipo_id
+  group by b.bloque, b.item, b.clave, b.equipo_id, b.equipo_codigo, b.equipo_nombre,
+           b.categoria_codificada, e.total_grupo;
 $$;
 
 -- ============================================================================

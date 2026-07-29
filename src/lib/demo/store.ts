@@ -49,12 +49,11 @@ export function findEquipoByCodigo(codigo: string): DemoEquipo | undefined {
   return listEquipos().find((e) => e.codigo.toUpperCase() === codigo.toUpperCase());
 }
 
-export function createEquipo(input: { codigo: string; nombre: string | null; comunaId: number }): DemoEquipo {
+export function createEquipo(input: { codigo: string; nombre: string | null }): DemoEquipo {
   const equipo: DemoEquipo = {
     id: generateId(),
     codigo: input.codigo,
     nombre: input.nombre,
-    comunaId: input.comunaId,
     activo: true,
     createdAt: new Date().toISOString(),
   };
@@ -98,6 +97,7 @@ export function createUser(input: {
     pais: "Colombia",
     ciudad: "Medellín",
     equipoId: input.equipoId,
+    // Autodeclarada: solo alimenta las líneas de atención que ve esta persona.
     comunaId: input.comunaId,
     createdAt: new Date().toISOString(),
   };
