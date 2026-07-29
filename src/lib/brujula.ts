@@ -1037,26 +1037,90 @@ function calcularRecursos(cerradas: RespuestasCerradas): Recurso[] {
 // Se detectan TEMAS por palabras clave. Nunca se afirma haber descubierto el
 // "propósito verdadero": el encabezado es siempre "en tus respuestas aparece".
 
-const TEMAS_PROPOSITO: { tema: string; claves: string[] }[] = [
-  { tema: "Autonomía", claves: ["independi", "propio", "mio", "por mi cuenta", "libertad", "libre"] },
-  { tema: "Familia", claves: ["familia", "mam", "pap", "herman", "hij", "abuel", "casa"] },
-  { tema: "Aprendizaje", claves: ["aprend", "estudi", "conocer", "saber", "universidad", "carrera"] },
-  { tema: "Servicio a otros", claves: ["ayudar", "servir", "comunidad", "barrio", "gente", "otros"] },
-  { tema: "Creatividad", claves: ["crear", "arte", "music", "dibuj", "baile", "escribir", "cantar"] },
-  { tema: "Estabilidad", claves: ["estabilidad", "seguro", "tranquil", "casa propia", "ahorr"] },
-  { tema: "Reconocimiento", claves: ["orgullo", "demostrar", "lograr", "primera", "primer"] },
-  { tema: "Impacto social", claves: ["cambiar", "transformar", "mejorar", "justicia", "derechos"] },
-];
+// Los temas se derivan PRIMERO de las respuestas cerradas, porque los campos de
+// observaciones son opcionales y la mayoría de la gente no los llena. Si además
+// escribió algo, el texto refuerza o agrega temas — pero nunca es la condición
+// para que la sección exista. Antes lo era, y quien no escribía veía un hueco.
 
-export type Proposito = { temas: string[]; textoFuente: boolean };
+/** Temas sugeridos por el documento (§10). Ninguno se afirma como "el propósito
+ *  verdadero": la interfaz siempre los presenta como algo que aparece. */
+const TEMAS: Record<string, { desde: string[]; claves: string[] }> = {
+  Aprendizaje: {
+    desde: ["estudiar", "educacion", "tecnologia", "innovacion_social"],
+    claves: ["aprend", "estudi", "conocer", "saber", "universidad", "carrera", "colegio"],
+  },
+  Autonomía: {
+    desde: ["emprender", "crear_empresa", "yo_mismo", "resolucion_problemas", "emprendimiento"],
+    claves: ["independi", "propio", "por mi cuenta", "libertad", "libre", "solo", "mio"],
+  },
+  Familia: {
+    desde: ["apoyar_familia", "familia"],
+    claves: ["familia", "mam", "pap", "herman", "hij", "abuel", "casa"],
+  },
+  Estabilidad: {
+    desde: ["conseguir_empleo", "comprar_vivienda", "trabajo", "prudencia", "ahorrar"],
+    claves: ["estabilidad", "seguro", "tranquil", "casa propia", "ahorr", "estable"],
+  },
+  Creatividad: {
+    desde: ["talento_artistico", "creatividad", "cultura", "deporte"],
+    claves: ["crear", "arte", "music", "dibuj", "baile", "escribir", "cantar"],
+  },
+  "Servicio a otros": {
+    desde: ["servir_comunidad", "empatia", "comunicacion", "medio_ambiente"],
+    claves: ["ayudar", "servir", "gente", "otros", "acompañar"],
+  },
+  "Impacto en mi comunidad": {
+    desde: [
+      "liderazgo",
+      "procesos_comunitarios",
+      "participacion_politica",
+      "derechos_humanos",
+      "igualdad",
+      "participacion",
+    ],
+    claves: ["cambiar", "transformar", "mejorar", "justicia", "derechos", "barrio", "comunidad"],
+  },
+  "Realización personal": {
+    desde: ["disciplina", "responsabilidad", "perseverancia", "viajar"],
+    claves: ["orgullo", "demostrar", "lograr", "primera", "primer", "superar", "crecer"],
+  },
+};
 
-function calcularProposito(abiertas: RespuestasAbiertas): Proposito {
-  // Se leen los campos donde la persona explica el sentido de lo que quiere.
-  const fuentes = [
+export type TemaProposito = { nombre: string; /** Cuántas respuestas apuntan a él. */ apoyos: number };
+
+export type Proposito = {
+  temas: TemaProposito[];
+  /** true si además de las respuestas cerradas hubo texto que aportó. */
+  enriquecidoConTexto: boolean;
+};
+
+function calcularProposito(
+  cerradas: RespuestasCerradas,
+  abiertas: RespuestasAbiertas,
+): Proposito {
+  // Valores elegidos en las preguntas que hablan de sentido: sueño, fortaleza,
+  // en quién se apoya, derecho prioritario e intereses de participación.
+  const elegidos = new Set<string>();
+  for (const claveItem of [
+    "sueno_principal",
+    "mayor_fortaleza",
+    "quien_ayuda",
+    "derecho_prioritario",
+    "intereses_iniciativas",
+    "primer_paso",
+  ]) {
+    const valor = clave(cerradas, claveItem);
+    const opcion = getOpcion(valor);
+    if (opcion) elegidos.add(opcion);
+    for (const o of getOpciones(valor)) elegidos.add(o);
+  }
+
+  const texto = [
     abiertas["sueno_descripcion"],
     abiertas["quien_ayuda_motivo"],
     abiertas["primer_paso_accion"],
     abiertas["mayor_fortaleza_ejemplo"],
+    abiertas["intereses_iniciativas_aporte"],
   ]
     .filter(Boolean)
     .join(" ")
@@ -1064,13 +1128,26 @@ function calcularProposito(abiertas: RespuestasAbiertas): Proposito {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "");
 
-  if (fuentes.trim().length === 0) return { temas: [], textoFuente: false };
-
   const norm = (k: string) => k.normalize("NFD").replace(/\p{Diacritic}/gu, "");
-  const temas = TEMAS_PROPOSITO.filter((t) => t.claves.some((k) => fuentes.includes(norm(k)))).map(
-    (t) => t.tema,
-  );
-  return { temas, textoFuente: true };
+  let aportoTexto = false;
+
+  const temas: TemaProposito[] = [];
+  for (const [nombre, def] of Object.entries(TEMAS)) {
+    const porCerradas = def.desde.filter((v) => elegidos.has(v)).length;
+    const porTexto =
+      texto.trim().length > 0 && def.claves.some((k) => texto.includes(norm(k))) ? 1 : 0;
+    if (porTexto > 0 && porCerradas === 0) aportoTexto = true;
+    if (porTexto > 0 && porCerradas > 0) aportoTexto = true;
+    const apoyos = porCerradas + porTexto;
+    if (apoyos > 0) temas.push({ nombre, apoyos });
+  }
+
+  return {
+    // Los más apoyados primero, y como máximo cuatro: una lista de ocho temas no
+    // orienta a nadie.
+    temas: temas.sort((a, b) => b.apoyos - a.apoyos).slice(0, 4),
+    enriquecidoConTexto: aportoTexto,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -1136,7 +1213,7 @@ export function calcularBrujula(
     agujas: calcularAgujas(cerradas, indices),
     barreras: calcularBarreras(cerradas),
     recursos: calcularRecursos(cerradas),
-    proposito: calcularProposito(abiertas),
+    proposito: calcularProposito(cerradas, abiertas),
     foda: calcularFoda(cerradas),
     perfilLiderazgo: calcularPerfilLiderazgo(cerradas),
     recomendaciones: calcularRecomendaciones({ indices, cerradas }),

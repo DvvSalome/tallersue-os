@@ -338,11 +338,17 @@ function Serie({
       }));
 
   if (filas.length === 0) {
+    // Un panel vacío tiene dos causas distintas y conviene no confundirlas: o no
+    // se alcanzó el umbral de anonimato, o esta serie viene de un comentario
+    // OPCIONAL que nadie escribió. Decir "faltan respuestas" en el segundo caso
+    // haría pensar que el grupo no participó.
+    const esComentarioOpcional = serie.esTexto && serie.item.tipo !== "texto";
     return (
       <Panel titulo={titulo} n={null} nota={serie.nota}>
         <p className="text-sm leading-relaxed text-muted/80">
-          Todavía no hay suficientes respuestas para mostrar este resultado de forma segura (mínimo{" "}
-          {K_ANON_MIN} por grupo).
+          {esComentarioOpcional
+            ? `Este panel se construye con los comentarios, que son opcionales. Todavía no hay al menos ${K_ANON_MIN} personas del mismo grupo que hayan escrito algo aquí. El resto de la sección no depende de esto.`
+            : `Todavía no hay suficientes respuestas para mostrar este resultado de forma segura (mínimo ${K_ANON_MIN} por grupo).`}
         </p>
       </Panel>
     );

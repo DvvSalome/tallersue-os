@@ -200,28 +200,36 @@ export function BrujulaView({
       {/* ---------------------------------------------- Propósito */}
       <Seccion
         titulo="Lo que le da sentido a tu sueño"
-        contexto="Temas que aparecen en lo que escribiste. Son pistas para explorar, no conclusiones."
+        contexto="Temas que aparecen en lo que elegiste. Son pistas para explorar, no conclusiones sobre ti."
       >
-        {!proposito.textoFuente ? (
-          <Vacio>
-            Los comentarios del formulario son opcionales, y esta sección se construye con ellos. Si
-            quieres verla, puedes volver y contarnos un poco más sobre tu sueño.
-          </Vacio>
-        ) : proposito.temas.length === 0 ? (
-          <Vacio>Todavía no identificamos temas recurrentes en lo que escribiste.</Vacio>
+        {proposito.temas.length === 0 ? (
+          <Vacio>Cuando completes el formulario aparecerán aquí los temas que se repiten.</Vacio>
         ) : (
           <>
-            <p className="text-sm text-muted">En tus respuestas aparece con frecuencia:</p>
+            <p className="text-sm text-muted">
+              {proposito.enriquecidoConTexto
+                ? "En lo que elegiste y escribiste aparece con frecuencia:"
+                : "En lo que elegiste aparece con frecuencia:"}
+            </p>
             <div className="mt-2.5 flex flex-wrap gap-2">
               {proposito.temas.map((t) => (
                 <span
-                  key={t}
+                  key={t.nombre}
                   className="rounded-full border border-coral/30 bg-coral/10 px-3.5 py-1.5 text-sm font-medium text-foreground/90"
                 >
-                  {t}
+                  {t.nombre}
+                  <span className="ml-1.5 text-xs text-muted">
+                    {t.apoyos} {t.apoyos === 1 ? "señal" : "señales"}
+                  </span>
                 </span>
               ))}
             </div>
+            {!proposito.enriquecidoConTexto && (
+              <p className="mt-3 text-[13px] leading-relaxed text-muted/80">
+                Esto sale de tus respuestas de selección. Si vuelves al formulario y cuentas algo
+                sobre tu sueño en los comentarios, esta lectura se afina — pero no hace falta.
+              </p>
+            )}
             <NotaIA />
           </>
         )}
